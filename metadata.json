@@ -1,0 +1,6 @@
+{
+  "name": "The Mirro",
+  "description": "Last-minute beauty appointments at up to 50% off near you. Flash deal marketplace for salon cancellations.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
