@@ -21,7 +21,7 @@ export const HowItWorks: React.FC = () => {
       number: '03',
       icon: CreditCard,
       title: 'Pay securely to lock in spot',
-      description: 'Book and pay upfront online via Calendly & Stripe. No cash or card needed at the salon.',
+      description: 'Book and pay upfront online. No cash or card needed at the salon.',
       highlight: 'Guaranteed reservation',
     },
   ];
@@ -38,7 +38,7 @@ export const HowItWorks: React.FC = () => {
             How <span className="italic font-serif text-stone-600">The Mirro</span> Works
           </h2>
           <p className="mt-3 text-stone-600 text-sm sm:text-base font-light">
-            Connecting empty salon chairs with beauty lovers looking for premium treatments at irresistible flash prices.
+            Connecting canceled appointments with customers looking for them at discounted rate.
           </p>
         </div>
 

@@ -40,21 +40,27 @@ export const Hero: React.FC<HeroProps> = ({ config }) => {
             <span className="relative inline-flex rounded-full h-2 w-2 bg-stone-700"></span>
           </span>
           <Zap className="w-3.5 h-3.5 text-stone-700 fill-stone-700" />
-          <span className="tracking-wide">Flash Cancellation Deals • Toronto & GTA</span>
+          <span className="tracking-wide">Flash Cancellation Deals • Canada</span>
         </div>
 
         {/* Headline */}
-        <h1 className="font-serif text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-normal tracking-tight leading-[1.12] text-stone-900 max-w-4xl mx-auto">
-          Last-minute beauty appointments,{' '}
-          <span className="italic font-serif text-stone-600 font-normal">
-            up to {config.discountPercentage}% off
-          </span>
+        <h1 className="font-serif text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-normal tracking-tight leading-[1.08] text-stone-900 max-w-4xl mx-auto">
+          Canceled Appointments.{' '}
+          <span className="italic font-serif text-stone-600 block sm:inline">
+            Top Stylists.
+          </span>{' '}
+          One Community.
         </h1>
 
-        {/* Subheadline */}
-        <p className="mt-6 text-base sm:text-lg md:text-xl text-stone-600 max-w-2xl mx-auto leading-relaxed font-light">
-          When top Toronto salons get last-minute cancellations, we alert local beauty lovers so you can grab premium discounted openings before they fill up.
-        </p>
+        {/* Kitchenly-Style Narrative Writeup */}
+        <div className="mt-8 text-base sm:text-lg md:text-xl text-stone-600 max-w-3xl mx-auto leading-relaxed font-light space-y-4 text-left sm:text-center">
+          <p>
+            The Mirro is a neighbourhood marketplace for last-minute beauty appointments. We connect beauty lovers with talented local stylists and top salons filling last-minute canceled openings at discounted rates — the kind of premium appointments that are usually booked weeks in advance.
+          </p>
+          <p>
+            Discover flash openings from specialists in your area, or turn your salon's canceled slots into filled chairs. One community, built around real artistry and the real beauty professionals who create it.
+          </p>
+        </div>
 
         {/* Call to Action Buttons */}
         <div className="mt-8 sm:mt-10 flex flex-col sm:flex-row items-center justify-center gap-4 max-w-md mx-auto">
@@ -88,7 +94,7 @@ export const Hero: React.FC<HeroProps> = ({ config }) => {
           </div>
           <div className="flex items-center justify-center gap-2 bg-white/80 py-2.5 px-3 rounded-xl border border-stone-200/80 shadow-sm">
             <MapPin className="w-4 h-4 text-stone-700 shrink-0" />
-            <span>Top Toronto Salons</span>
+            <span>Top Canadian Salons</span>
           </div>
           <div className="flex items-center justify-center gap-2 bg-white/80 py-2.5 px-3 rounded-xl border border-stone-200/80 shadow-sm col-span-2 md:col-span-1">
             <span className="text-stone-900 font-bold">100%</span>

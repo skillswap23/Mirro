@@ -24,7 +24,7 @@ export const ProSection: React.FC<ProSectionProps> = ({ onProLeadAdded }) => {
       name,
       businessName,
       serviceType,
-      neighborhood: neighborhood || 'Toronto, ON',
+      neighborhood: neighborhood || 'Canada',
       email,
       phone,
       createdAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
@@ -96,7 +96,7 @@ export const ProSection: React.FC<ProSectionProps> = ({ onProLeadAdded }) => {
                 </div>
                 <h4 className="text-sm font-semibold text-stone-900">Zero Upfront Cost</h4>
                 <p className="text-xs text-stone-600 font-light mt-1">
-                  Free to list your business. We only keep a small commission when a slot sells.
+                  Free to list your business. Start filling your open slots with zero upfront costs.
                 </p>
               </div>
             </div>
@@ -241,6 +241,17 @@ export const ProSection: React.FC<ProSectionProps> = ({ onProLeadAdded }) => {
                     <Send className="w-4 h-4" />
                     Join The Mirro Pro Network
                   </button>
+                  <p className="text-[11px] text-stone-500 text-center mt-3 font-light leading-relaxed max-w-lg mx-auto">
+                    By joining, you agree we can contact you about The Mirro's salon partner onboarding. See our{' '}
+                    <a href="#policies" className="underline hover:text-stone-900">
+                      Privacy Policy
+                    </a>
+                    . Unsubscribe anytime by emailing{' '}
+                    <a href="mailto:faith@themirro.com" className="underline hover:text-stone-900">
+                      faith@themirro.com
+                    </a>
+                    .
+                  </p>
                 </div>
               </form>
             )}

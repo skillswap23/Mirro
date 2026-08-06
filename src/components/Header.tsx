@@ -5,9 +5,10 @@ import { SiteConfig } from '../types';
 interface HeaderProps {
   config: SiteConfig;
   onOpenConfig?: () => void;
+  onOpenPrivacy?: () => void;
 }
 
-export const Header: React.FC<HeaderProps> = ({ config, onOpenConfig }) => {
+export const Header: React.FC<HeaderProps> = ({ config, onOpenConfig, onOpenPrivacy }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const scrollTo = (id: string) => {
@@ -34,7 +35,7 @@ export const Header: React.FC<HeaderProps> = ({ config, onOpenConfig }) => {
                 </span>
               </div>
               <p className="text-[11px] text-stone-500 -mt-0.5 hidden sm:block font-light">
-                Last-minute salon openings in Toronto • Up to {config.discountPercentage}% off
+                Canada's Last-Minute Beauty Marketplace
               </p>
             </div>
           </div>
@@ -71,8 +72,16 @@ export const Header: React.FC<HeaderProps> = ({ config, onOpenConfig }) => {
               className="hover:text-stone-900 transition-colors flex items-center gap-1 text-stone-500"
             >
               <ShieldCheck className="w-3.5 h-3.5" />
-              Policy
+              Booking Policy
             </button>
+            {onOpenPrivacy && (
+              <button
+                onClick={onOpenPrivacy}
+                className="hover:text-stone-900 transition-colors text-stone-500"
+              >
+                Privacy Policy
+              </button>
+            )}
           </nav>
 
           {/* Main Action CTA */}
@@ -133,20 +142,6 @@ export const Header: React.FC<HeaderProps> = ({ config, onOpenConfig }) => {
           >
             Booking & Payment Policy
           </button>
-          {onOpenConfig && (
-            <div className="pt-2 border-t border-stone-200 flex items-center justify-between">
-              <button
-                onClick={() => {
-                  setMobileMenuOpen(false);
-                  onOpenConfig();
-                }}
-                className="text-xs text-stone-600 hover:underline flex items-center gap-1"
-              >
-                <SlidersHorizontal className="w-3.5 h-3.5" />
-                Configure Airtable / Calendly Embed URLs
-              </button>
-            </div>
-          )}
         </div>
       )}
     </header>

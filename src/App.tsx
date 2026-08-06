@@ -1,16 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Header } from './components/Header';
 import { Hero } from './components/Hero';
 import { HowItWorks } from './components/HowItWorks';
 import { LiveDealsBoard } from './components/LiveDealsBoard';
-import { CustomerSignupForm } from './components/CustomerSignupForm';
-import { ProSection } from './components/ProSection';
+import { JoinCommunitySection } from './components/JoinCommunitySection';
 import { PolicySection } from './components/PolicySection';
 import { Footer } from './components/Footer';
 import { ConfigModal } from './components/ConfigModal';
 import { AdminSignupsModal } from './components/AdminSignupsModal';
 import { AdminAuthModal } from './components/AdminAuthModal';
 import { AdminHubModal } from './components/AdminHubModal';
+import { AdminDealsModal } from './components/AdminDealsModal';
+import { PrivacyPolicyModal } from './components/PrivacyPolicyModal';
 
 import { Deal, SiteConfig, ClientLead, ProLead } from './types';
 import { DEFAULT_SITE_CONFIG, INITIAL_DEALS } from './data/initialDeals';
@@ -27,8 +28,16 @@ export default function App() {
     return DEFAULT_SITE_CONFIG;
   });
 
-  // State for deals
-  const [deals] = useState<Deal[]>(INITIAL_DEALS);
+  // State for deals with LocalStorage persistence
+  const [deals, setDeals] = useState<Deal[]>(() => {
+    try {
+      const saved = localStorage.getItem('themirro_live_deals');
+      if (saved) return JSON.parse(saved);
+    } catch (e) {
+      console.error('Failed to parse deals from storage', e);
+    }
+    return INITIAL_DEALS;
+  });
 
   // Admin Authentication State
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState<boolean>(() => {
@@ -63,8 +72,10 @@ export default function App() {
   // Modals Visibility
   const [isConfigOpen, setIsConfigOpen] = useState(false);
   const [isAdminSignupsOpen, setIsAdminSignupsOpen] = useState(false);
+  const [isAdminDealsOpen, setIsAdminDealsOpen] = useState(false);
   const [isAdminAuthOpen, setIsAdminAuthOpen] = useState(false);
   const [isAdminHubOpen, setIsAdminHubOpen] = useState(false);
+  const [isPrivacyOpen, setIsPrivacyOpen] = useState(false);
 
   const handleOpenAdminPortal = () => {
     if (isAdminAuthenticated) {
@@ -114,6 +125,30 @@ export default function App() {
     }
   };
 
+  const handleAddDeal = (newDeal: Deal) => {
+    setDeals((prev) => {
+      const updated = [newDeal, ...prev];
+      try {
+        localStorage.setItem('themirro_live_deals', JSON.stringify(updated));
+      } catch (e) {
+        console.error(e);
+      }
+      return updated;
+    });
+  };
+
+  const handleDeleteDeal = (dealId: string) => {
+    setDeals((prev) => {
+      const updated = prev.filter((d) => d.id !== dealId);
+      try {
+        localStorage.setItem('themirro_live_deals', JSON.stringify(updated));
+      } catch (e) {
+        console.error(e);
+      }
+      return updated;
+    });
+  };
+
   const handleAddClientLead = (lead: ClientLead) => {
     setClientLeads((prev) => {
       const updated = [lead, ...prev];
@@ -151,16 +186,8 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-[#FAF8F5] text-stone-900 font-sans selection:bg-stone-200 selection:text-stone-900">
-      {/* Top Announcement Ribbon */}
-      <div className="bg-[#F4EFEA] text-stone-700 text-[11px] sm:text-xs py-2 px-4 text-center font-medium border-b border-stone-200/70 flex items-center justify-center gap-2">
-        <span className="w-1.5 h-1.5 rounded-full bg-stone-500 animate-pulse" />
-        <span>
-          <strong>Flash Openings Active:</strong> Up to {config.discountPercentage}% off top Toronto salons in Yorkville, King West & Queen West.
-        </span>
-      </div>
-
       {/* Header */}
-      <Header config={config} />
+      <Header config={config} onOpenPrivacy={() => setIsPrivacyOpen(true)} />
 
       {/* Main Sections */}
       <main>
@@ -173,11 +200,12 @@ export default function App() {
         {/* 3. Live Deals Board */}
         <LiveDealsBoard deals={deals} config={config} />
 
-        {/* 4. Customer Signup Form */}
-        <CustomerSignupForm config={config} onLeadAdded={handleAddClientLead} />
-
-        {/* 5. Beauty Professionals / Stylists Section */}
-        <ProSection onProLeadAdded={handleAddProLead} />
+        {/* 4. Side-by-Side Join Community Section (Client Alerts & Stylist Application) */}
+        <JoinCommunitySection
+          config={config}
+          onClientLeadAdded={handleAddClientLead}
+          onProLeadAdded={handleAddProLead}
+        />
 
         {/* 6. Booking & Payment Policy Section */}
         <PolicySection config={config} />
@@ -188,6 +216,13 @@ export default function App() {
         config={config}
         onOpenAdmin={handleOpenAdminPortal}
         isAdminAuthenticated={isAdminAuthenticated}
+        onOpenPrivacy={() => setIsPrivacyOpen(true)}
+      />
+
+      {/* Privacy Policy Modal */}
+      <PrivacyPolicyModal
+        isOpen={isPrivacyOpen}
+        onClose={() => setIsPrivacyOpen(false)}
       />
 
       {/* Admin Email SSO Authentication Modal */}
@@ -207,7 +242,17 @@ export default function App() {
         config={config}
         onOpenSignupsDashboard={() => setIsAdminSignupsOpen(true)}
         onOpenEmbedConfig={() => setIsConfigOpen(true)}
+        onOpenDealsManager={() => setIsAdminDealsOpen(true)}
         onLockAdmin={handleLockAdmin}
+      />
+
+      {/* Admin Upload & Manage Appointments Modal */}
+      <AdminDealsModal
+        isOpen={isAdminDealsOpen}
+        onClose={() => setIsAdminDealsOpen(false)}
+        deals={deals}
+        onAddDeal={handleAddDeal}
+        onDeleteDeal={handleDeleteDeal}
       />
 
       {/* No-Code Setup / Config Modal */}

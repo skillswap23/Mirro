@@ -6,9 +6,10 @@ interface FooterProps {
   config: SiteConfig;
   onOpenAdmin: () => void;
   isAdminAuthenticated: boolean;
+  onOpenPrivacy?: () => void;
 }
 
-export const Footer: React.FC<FooterProps> = ({ config, onOpenAdmin, isAdminAuthenticated }) => {
+export const Footer: React.FC<FooterProps> = ({ config, onOpenAdmin, isAdminAuthenticated, onOpenPrivacy }) => {
   const year = new Date().getFullYear();
 
   return (
@@ -23,7 +24,7 @@ export const Footer: React.FC<FooterProps> = ({ config, onOpenAdmin, isAdminAuth
               </span>
             </div>
             <p className="text-stone-600 text-xs max-w-sm leading-relaxed font-light">
-              The last-minute flash marketplace for beauty services in Toronto & GTA. Connecting cancelled salon appointments with nearby clients at up to {config.discountPercentage}% off.
+              The last-minute flash marketplace for beauty services across Canada. Connecting canceled appointments with customers looking for them at discounted rate.
             </p>
           </div>
 
@@ -96,6 +97,14 @@ export const Footer: React.FC<FooterProps> = ({ config, onOpenAdmin, isAdminAuth
               Booking Policy
             </a>
             <span>•</span>
+            {onOpenPrivacy && (
+              <>
+                <button onClick={onOpenPrivacy} className="hover:text-stone-900 text-stone-600 transition-colors">
+                  Privacy Policy
+                </button>
+                <span>•</span>
+              </>
+            )}
             <span className="flex items-center gap-1">
               Crafted with <Heart className="w-3 h-3 text-stone-600 fill-stone-400" /> for beauty pros
             </span>

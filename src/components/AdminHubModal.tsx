@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Users, SlidersHorizontal, Lock, ShieldCheck, ChevronRight, KeyRound, Check } from 'lucide-react';
+import { X, Users, SlidersHorizontal, Lock, ShieldCheck, ChevronRight, KeyRound, Check, CalendarPlus } from 'lucide-react';
 import { ClientLead, ProLead, SiteConfig } from '../types';
 
 interface AdminHubModalProps {
@@ -10,6 +10,7 @@ interface AdminHubModalProps {
   config: SiteConfig;
   onOpenSignupsDashboard: () => void;
   onOpenEmbedConfig: () => void;
+  onOpenDealsManager: () => void;
   onLockAdmin: () => void;
 }
 
@@ -21,6 +22,7 @@ export const AdminHubModal: React.FC<AdminHubModalProps> = ({
   config,
   onOpenSignupsDashboard,
   onOpenEmbedConfig,
+  onOpenDealsManager,
   onLockAdmin,
 }) => {
   const [showPasswordChange, setShowPasswordChange] = useState(false);
@@ -74,6 +76,28 @@ export const AdminHubModal: React.FC<AdminHubModalProps> = ({
 
         {/* Action Cards */}
         <div className="space-y-3">
+          {/* Upload & Manage Appointments Card */}
+          <button
+            onClick={() => {
+              onClose();
+              onOpenDealsManager();
+            }}
+            className="w-full text-left p-4 rounded-2xl border border-stone-900 bg-stone-900 text-white hover:bg-stone-800 transition-all group flex items-center justify-between shadow-md"
+          >
+            <div className="flex items-start gap-3.5">
+              <div className="w-10 h-10 rounded-xl bg-white/10 text-white border border-white/20 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                <CalendarPlus className="w-5 h-5 text-stone-100" />
+              </div>
+              <div>
+                <h4 className="font-medium text-sm text-white">Upload & Manage Salon Appointments</h4>
+                <p className="text-xs text-stone-300 font-light mt-0.5">
+                  Add canceled appointments sent by salons & manage active live board deals.
+                </p>
+              </div>
+            </div>
+            <ChevronRight className="w-5 h-5 text-stone-400 group-hover:translate-x-0.5 transition-transform shrink-0" />
+          </button>
+
           {/* Signups & Leads Card */}
           <button
             onClick={() => {

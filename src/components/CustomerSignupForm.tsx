@@ -75,7 +75,7 @@ export const CustomerSignupForm: React.FC<CustomerSignupFormProps> = ({ config, 
             <span className="italic font-serif text-stone-600">Get instant SMS alert drops</span>
           </h2>
           <p className="mt-3 text-stone-600 text-sm sm:text-base font-light">
-            Tell us your Toronto neighborhood and preferred beauty services. When a nearby stylist posts a cancellation, you'll be the first to know.
+            Tell us your city or region in Canada and preferred beauty services. When a nearby stylist posts a cancellation, you'll be the first to know.
           </p>
         </div>
 
@@ -162,11 +162,11 @@ export const CustomerSignupForm: React.FC<CustomerSignupFormProps> = ({ config, 
 
                 <div>
                   <label className="block text-xs font-medium text-stone-700 mb-1.5">
-                    City / Neighborhood (Toronto / GTA)
+                    City / Region (Canada)
                   </label>
                   <input
                     type="text"
-                    placeholder="e.g. Yorkville, King West, Queen West"
+                    placeholder="e.g. Toronto, Vancouver, Montreal, Calgary"
                     value={neighborhood}
                     onChange={(e) => setNeighborhood(e.target.value)}
                     className="w-full bg-[#FAF8F5] text-sm text-stone-900 placeholder-stone-400 px-4 py-3 rounded-xl border border-stone-200 focus:outline-none focus:border-stone-400 focus:bg-white transition-all"
@@ -221,9 +221,16 @@ export const CustomerSignupForm: React.FC<CustomerSignupFormProps> = ({ config, 
                   <Send className="w-4 h-4" />
                   Subscribe to Free SMS Deal Alerts
                 </button>
-                <p className="text-[11px] text-stone-500 text-center mt-3 flex items-center justify-center gap-1 font-light">
-                  <ShieldCheck className="w-3.5 h-3.5 text-stone-400" />
-                  Zero spam. Unsubscribe anytime by replying STOP.
+                <p className="text-[11px] text-stone-500 text-center mt-3 font-light leading-relaxed max-w-lg mx-auto">
+                  By joining, you agree we can email and SMS you about The Mirro's launch and flash deal alerts. See our{' '}
+                  <a href="#policies" className="underline hover:text-stone-900">
+                    Privacy Policy
+                  </a>
+                  . Unsubscribe anytime by emailing{' '}
+                  <a href="mailto:faith@themirro.com" className="underline hover:text-stone-900">
+                    faith@themirro.com
+                  </a>
+                  .
                 </p>
               </div>
             </form>

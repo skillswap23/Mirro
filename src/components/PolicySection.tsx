@@ -13,10 +13,10 @@ export const PolicySection: React.FC<PolicySectionProps> = ({ config }) => {
         <div className="text-center max-w-xl mx-auto mb-10">
           <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-white border border-stone-200 text-stone-700 text-xs font-medium mb-3 shadow-sm">
             <ShieldCheck className="w-3.5 h-3.5 text-stone-600" />
-            Transparent & Plain Language
+            Official Booking Policy
           </div>
           <h2 className="font-serif text-3xl sm:text-4xl font-normal text-stone-900 tracking-tight">
-            Booking & Payment <span className="italic font-serif text-stone-600">Policy</span>
+            Flash Deal <span className="italic font-serif text-stone-600">Booking Policy</span>
           </h2>
           <p className="mt-2 text-stone-600 text-sm font-light">
             Our strict rules protect stylists while offering customers unbeatable flash prices.
@@ -34,7 +34,7 @@ export const PolicySection: React.FC<PolicySectionProps> = ({ config }) => {
                 Paid in Full At Booking
               </h3>
               <p className="text-xs sm:text-sm text-stone-600 font-light leading-relaxed">
-                All flash deals are paid in full at time of booking through Stripe right after selecting your time slot on Calendly.
+                All flash deals are paid in full at time of booking when selecting your preferred appointment slot.
               </p>
             </div>
             <div className="mt-6 pt-3 border-t border-stone-100 text-[11px] text-stone-500 font-medium">
@@ -76,14 +76,6 @@ export const PolicySection: React.FC<PolicySectionProps> = ({ config }) => {
             <div className="mt-6 pt-3 border-t border-stone-100 text-[11px] text-stone-500 font-medium">
               ✓ Automatic goodwill credit voucher
             </div>
-          </div>
-        </div>
-
-        {/* Integration Architecture Explanation Note */}
-        <div className="mt-8 bg-white rounded-2xl p-5 border border-stone-200/80 text-xs text-stone-600 flex items-start gap-3 shadow-sm">
-          <Info className="w-5 h-5 text-stone-700 shrink-0 mt-0.5" />
-          <div className="leading-relaxed font-light">
-            <strong className="text-stone-900 font-medium">Technical Integration Workflow:</strong> The "Claim this deal" buttons link directly to Calendly time selection pages. Calendly is configured to forward directly to a matching Stripe Payment Link upon slot selection, creating an integrated booking + payment flow before appointment confirmation.
           </div>
         </div>
       </div>
