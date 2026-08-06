@@ -5,6 +5,7 @@ import { ClientLead, ServiceCategory, SiteConfig } from '../types';
 interface CustomerSignupFormProps {
   config: SiteConfig;
   onLeadAdded?: (lead: ClientLead) => void;
+  onOpenLegalModal?: (defaultTab?: 'privacy' | 'terms') => void;
 }
 
 const SERVICE_OPTIONS: { id: ServiceCategory; label: string }[] = [
@@ -15,12 +16,17 @@ const SERVICE_OPTIONS: { id: ServiceCategory; label: string }[] = [
   { id: 'makeup', label: 'Makeup & Glam' },
 ];
 
-export const CustomerSignupForm: React.FC<CustomerSignupFormProps> = ({ config, onLeadAdded }) => {
+export const CustomerSignupForm: React.FC<CustomerSignupFormProps> = ({
+  config,
+  onLeadAdded,
+  onOpenLegalModal,
+}) => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [neighborhood, setNeighborhood] = useState('');
   const [selectedServices, setSelectedServices] = useState<ServiceCategory[]>(['hair', 'nails']);
+  const [agreedToPolicy, setAgreedToPolicy] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [lastSubmittedLead, setLastSubmittedLead] = useState<ClientLead | null>(null);
 
@@ -213,20 +219,62 @@ export const CustomerSignupForm: React.FC<CustomerSignupFormProps> = ({ config, 
                 </div>
               </div>
 
+              {/* Mandatory Terms & Privacy Policy Checkbox */}
+              <div className="pt-2">
+                <label className="flex items-start gap-3 cursor-pointer group p-3 rounded-2xl bg-[#FAF8F5] border border-stone-200/80 hover:border-stone-300 transition-all">
+                  <input
+                    type="checkbox"
+                    checked={agreedToPolicy}
+                    onChange={(e) => setAgreedToPolicy(e.target.checked)}
+                    className="sr-only"
+                    required
+                  />
+                  <div
+                    className={`w-5 h-5 rounded-md border flex items-center justify-center shrink-0 mt-0.5 transition-all ${
+                      agreedToPolicy
+                        ? 'bg-stone-900 border-stone-900 text-white'
+                        : 'border-stone-300 bg-white group-hover:border-stone-400'
+                    }`}
+                  >
+                    {agreedToPolicy && <Check className="w-3.5 h-3.5 stroke-[3]" />}
+                  </div>
+                  <span className="text-xs text-stone-600 leading-relaxed font-light">
+                    I agree to the{' '}
+                    <button
+                      type="button"
+                      onClick={() => onOpenLegalModal?.('privacy')}
+                      className="font-medium text-stone-900 underline hover:text-amber-700"
+                    >
+                      Privacy Policy
+                    </button>{' '}
+                    and{' '}
+                    <button
+                      type="button"
+                      onClick={() => onOpenLegalModal?.('terms')}
+                      className="font-medium text-stone-900 underline hover:text-amber-700"
+                    >
+                      Terms & Conditions
+                    </button>
+                    .
+                  </span>
+                </label>
+              </div>
+
               <div className="pt-2">
                 <button
                   type="submit"
-                  className="w-full py-4 rounded-full font-medium text-xs tracking-wide bg-stone-900 text-white shadow-sm hover:bg-stone-800 transition-all flex items-center justify-center gap-2"
+                  disabled={!agreedToPolicy}
+                  className={`w-full py-4 rounded-full font-medium text-xs tracking-wide shadow-sm transition-all flex items-center justify-center gap-2 ${
+                    agreedToPolicy
+                      ? 'bg-stone-900 text-white hover:bg-stone-800'
+                      : 'bg-stone-300 text-stone-500 cursor-not-allowed'
+                  }`}
                 >
                   <Send className="w-4 h-4" />
                   Subscribe to Free SMS Deal Alerts
                 </button>
                 <p className="text-[11px] text-stone-500 text-center mt-3 font-light leading-relaxed max-w-lg mx-auto">
-                  By joining, you agree we can email and SMS you about The Mirro's launch and flash deal alerts. See our{' '}
-                  <a href="#policies" className="underline hover:text-stone-900">
-                    Privacy Policy
-                  </a>
-                  . Unsubscribe anytime by emailing{' '}
+                  By joining, you agree we can email and SMS you about The Mirro's launch and flash deal alerts. Unsubscribe anytime by emailing{' '}
                   <a href="mailto:faith@themirro.com" className="underline hover:text-stone-900">
                     faith@themirro.com
                   </a>

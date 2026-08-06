@@ -76,6 +76,12 @@ export default function App() {
   const [isAdminAuthOpen, setIsAdminAuthOpen] = useState(false);
   const [isAdminHubOpen, setIsAdminHubOpen] = useState(false);
   const [isPrivacyOpen, setIsPrivacyOpen] = useState(false);
+  const [legalTab, setLegalTab] = useState<'privacy' | 'terms'>('privacy');
+
+  const handleOpenLegalModal = (defaultTab: 'privacy' | 'terms' = 'privacy') => {
+    setLegalTab(defaultTab);
+    setIsPrivacyOpen(true);
+  };
 
   const handleOpenAdminPortal = () => {
     if (isAdminAuthenticated) {
@@ -187,7 +193,11 @@ export default function App() {
   return (
     <div className="min-h-screen bg-[#FAF8F5] text-stone-900 font-sans selection:bg-stone-200 selection:text-stone-900">
       {/* Header */}
-      <Header config={config} onOpenPrivacy={() => setIsPrivacyOpen(true)} />
+      <Header
+        config={config}
+        onOpenPrivacy={() => handleOpenLegalModal('privacy')}
+        onOpenLegalModal={handleOpenLegalModal}
+      />
 
       {/* Main Sections */}
       <main>
@@ -205,6 +215,7 @@ export default function App() {
           config={config}
           onClientLeadAdded={handleAddClientLead}
           onProLeadAdded={handleAddProLead}
+          onOpenLegalModal={handleOpenLegalModal}
         />
 
         {/* 6. Booking & Payment Policy Section */}
@@ -216,13 +227,15 @@ export default function App() {
         config={config}
         onOpenAdmin={handleOpenAdminPortal}
         isAdminAuthenticated={isAdminAuthenticated}
-        onOpenPrivacy={() => setIsPrivacyOpen(true)}
+        onOpenPrivacy={() => handleOpenLegalModal('privacy')}
+        onOpenLegalModal={handleOpenLegalModal}
       />
 
-      {/* Privacy Policy Modal */}
+      {/* Privacy Policy & Terms Modal */}
       <PrivacyPolicyModal
         isOpen={isPrivacyOpen}
         onClose={() => setIsPrivacyOpen(false)}
+        defaultTab={legalTab}
       />
 
       {/* Admin Email SSO Authentication Modal */}

@@ -6,9 +6,15 @@ interface HeaderProps {
   config: SiteConfig;
   onOpenConfig?: () => void;
   onOpenPrivacy?: () => void;
+  onOpenLegalModal?: (defaultTab?: 'privacy' | 'terms') => void;
 }
 
-export const Header: React.FC<HeaderProps> = ({ config, onOpenConfig, onOpenPrivacy }) => {
+export const Header: React.FC<HeaderProps> = ({
+  config,
+  onOpenConfig,
+  onOpenPrivacy,
+  onOpenLegalModal,
+}) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const scrollTo = (id: string) => {
@@ -74,14 +80,6 @@ export const Header: React.FC<HeaderProps> = ({ config, onOpenConfig, onOpenPriv
               <ShieldCheck className="w-3.5 h-3.5" />
               Booking Policy
             </button>
-            {onOpenPrivacy && (
-              <button
-                onClick={onOpenPrivacy}
-                className="hover:text-stone-900 transition-colors text-stone-500"
-              >
-                Privacy Policy
-              </button>
-            )}
           </nav>
 
           {/* Main Action CTA */}

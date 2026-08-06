@@ -6,6 +6,7 @@ interface JoinCommunitySectionProps {
   config: SiteConfig;
   onClientLeadAdded?: (lead: ClientLead) => void;
   onProLeadAdded?: (lead: ProLead) => void;
+  onOpenLegalModal?: (defaultTab?: 'privacy' | 'terms') => void;
 }
 
 const SERVICE_OPTIONS: { id: ServiceCategory | 'other'; label: string }[] = [
@@ -21,6 +22,7 @@ export const JoinCommunitySection: React.FC<JoinCommunitySectionProps> = ({
   config,
   onClientLeadAdded,
   onProLeadAdded,
+  onOpenLegalModal,
 }) => {
   // Client Form State
   const [clientName, setClientName] = useState('');
@@ -29,6 +31,7 @@ export const JoinCommunitySection: React.FC<JoinCommunitySectionProps> = ({
   const [clientCity, setClientCity] = useState('');
   const [selectedServices, setSelectedServices] = useState<(ServiceCategory | 'other')[]>(['hair', 'nails']);
   const [otherServiceText, setOtherServiceText] = useState('');
+  const [clientAgreed, setClientAgreed] = useState(false);
   const [clientSubmitted, setClientSubmitted] = useState(false);
   const [lastClientLead, setLastClientLead] = useState<ClientLead | null>(null);
 
@@ -39,6 +42,7 @@ export const JoinCommunitySection: React.FC<JoinCommunitySectionProps> = ({
   const [proCity, setProCity] = useState('');
   const [proEmail, setProEmail] = useState('');
   const [proPhone, setProPhone] = useState('');
+  const [proAgreed, setProAgreed] = useState(false);
   const [proSubmitted, setProSubmitted] = useState(false);
 
   const toggleService = (id: ServiceCategory | 'other') => {
@@ -280,20 +284,62 @@ export const JoinCommunitySection: React.FC<JoinCommunitySectionProps> = ({
                     )}
                   </div>
 
+                  {/* Mandatory Terms & Privacy Policy Checkbox */}
                   <div className="pt-2">
+                    <label className="flex items-start gap-2.5 cursor-pointer group p-2.5 rounded-xl bg-[#FAF8F5] border border-stone-200 hover:border-stone-300 transition-all">
+                      <input
+                        type="checkbox"
+                        checked={clientAgreed}
+                        onChange={(e) => setClientAgreed(e.target.checked)}
+                        className="sr-only"
+                        required
+                      />
+                      <div
+                        className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 mt-0.5 transition-all ${
+                          clientAgreed
+                            ? 'bg-stone-900 border-stone-900 text-white'
+                            : 'border-stone-300 bg-white group-hover:border-stone-400'
+                        }`}
+                      >
+                        {clientAgreed && <Check className="w-3 h-3 stroke-[3]" />}
+                      </div>
+                      <span className="text-[11px] text-stone-600 leading-relaxed font-light">
+                        I agree to the{' '}
+                        <button
+                          type="button"
+                          onClick={() => onOpenLegalModal?.('privacy')}
+                          className="font-medium text-stone-900 underline hover:text-amber-700"
+                        >
+                          Privacy Policy
+                        </button>{' '}
+                        and{' '}
+                        <button
+                          type="button"
+                          onClick={() => onOpenLegalModal?.('terms')}
+                          className="font-medium text-stone-900 underline hover:text-amber-700"
+                        >
+                          Terms & Conditions
+                        </button>
+                        .
+                      </span>
+                    </label>
+                  </div>
+
+                  <div className="pt-1">
                     <button
                       type="submit"
-                      className="w-full py-3.5 rounded-full font-medium text-xs tracking-wide bg-stone-900 text-white shadow-sm hover:bg-stone-800 transition-all flex items-center justify-center gap-2"
+                      disabled={!clientAgreed}
+                      className={`w-full py-3.5 rounded-full font-medium text-xs tracking-wide shadow-sm transition-all flex items-center justify-center gap-2 ${
+                        clientAgreed
+                          ? 'bg-stone-900 text-white hover:bg-stone-800'
+                          : 'bg-stone-300 text-stone-500 cursor-not-allowed'
+                      }`}
                     >
                       <Send className="w-4 h-4" />
                       Subscribe for Free SMS Alerts
                     </button>
                     <p className="text-[11px] text-stone-500 text-center mt-3 font-light leading-relaxed">
-                      By joining, you agree we can email/SMS you about launch & deal drops. See our{' '}
-                      <a href="#policies" className="underline hover:text-stone-900">
-                        Privacy Policy
-                      </a>
-                      . Unsubscribe anytime via{' '}
+                      By joining, you agree we can email/SMS you about launch & deal drops. Unsubscribe anytime via{' '}
                       <a href="mailto:faith@themirro.com" className="underline hover:text-stone-900">
                         faith@themirro.com
                       </a>
@@ -448,20 +494,62 @@ export const JoinCommunitySection: React.FC<JoinCommunitySectionProps> = ({
                     </div>
                   </div>
 
+                  {/* Mandatory Terms & Privacy Policy Checkbox */}
                   <div className="pt-2">
+                    <label className="flex items-start gap-2.5 cursor-pointer group p-2.5 rounded-xl bg-white border border-stone-200 hover:border-stone-300 transition-all">
+                      <input
+                        type="checkbox"
+                        checked={proAgreed}
+                        onChange={(e) => setProAgreed(e.target.checked)}
+                        className="sr-only"
+                        required
+                      />
+                      <div
+                        className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 mt-0.5 transition-all ${
+                          proAgreed
+                            ? 'bg-stone-900 border-stone-900 text-white'
+                            : 'border-stone-300 bg-white group-hover:border-stone-400'
+                        }`}
+                      >
+                        {proAgreed && <Check className="w-3 h-3 stroke-[3]" />}
+                      </div>
+                      <span className="text-[11px] text-stone-600 leading-relaxed font-light">
+                        I agree to the{' '}
+                        <button
+                          type="button"
+                          onClick={() => onOpenLegalModal?.('privacy')}
+                          className="font-medium text-stone-900 underline hover:text-amber-700"
+                        >
+                          Privacy Policy
+                        </button>{' '}
+                        and{' '}
+                        <button
+                          type="button"
+                          onClick={() => onOpenLegalModal?.('terms')}
+                          className="font-medium text-stone-900 underline hover:text-amber-700"
+                        >
+                          Terms & Conditions
+                        </button>
+                        .
+                      </span>
+                    </label>
+                  </div>
+
+                  <div className="pt-1">
                     <button
                       type="submit"
-                      className="w-full py-3.5 rounded-full font-medium text-xs tracking-wide bg-stone-900 text-white shadow-sm hover:bg-stone-800 transition-all flex items-center justify-center gap-2"
+                      disabled={!proAgreed}
+                      className={`w-full py-3.5 rounded-full font-medium text-xs tracking-wide shadow-sm transition-all flex items-center justify-center gap-2 ${
+                        proAgreed
+                          ? 'bg-stone-900 text-white hover:bg-stone-800'
+                          : 'bg-stone-300 text-stone-500 cursor-not-allowed'
+                      }`}
                     >
                       <Send className="w-4 h-4" />
                       Apply as Partner Professional
                     </button>
                     <p className="text-[11px] text-stone-500 text-center mt-3 font-light leading-relaxed">
-                      By joining, you agree we can contact you regarding salon partner onboarding. See our{' '}
-                      <a href="#policies" className="underline hover:text-stone-900">
-                        Privacy Policy
-                      </a>
-                      . Unsubscribe via{' '}
+                      By joining, you agree we can contact you regarding salon partner onboarding. Unsubscribe via{' '}
                       <a href="mailto:faith@themirro.com" className="underline hover:text-stone-900">
                         faith@themirro.com
                       </a>
