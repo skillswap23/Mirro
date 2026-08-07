@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Users, Download, Copy, Check, Trash2, Phone, Mail, MapPin, Building2, UserCheck, Sparkles } from 'lucide-react';
+import { X, Users, Download, Copy, Check, Trash2, Phone, Mail, MapPin, Building2, UserCheck, Search, Filter } from 'lucide-react';
 import { ClientLead, ProLead } from '../types';
 
 interface AdminSignupsModalProps {
@@ -17,31 +17,69 @@ export const AdminSignupsModal: React.FC<AdminSignupsModalProps> = ({
   proLeads,
   onClearLeads,
 }) => {
-  const [activeTab, setActiveTab] = useState<'clients' | 'pros'>('clients');
+  const [activeTab, setActiveTab] = useState<'all' | 'clients' | 'pros'>('all');
+  const [searchQuery, setSearchQuery] = useState('');
   const [copiedText, setCopiedText] = useState(false);
 
   if (!isOpen) return null;
 
+  // Search filtering logic
+  const query = searchQuery.trim().toLowerCase();
+
+  const filteredClients = clientLeads.filter((c) => {
+    if (!query) return true;
+    const servicesStr = c.services.join(' ').toLowerCase();
+    return (
+      c.name.toLowerCase().includes(query) ||
+      c.email.toLowerCase().includes(query) ||
+      c.phone.toLowerCase().includes(query) ||
+      c.neighborhood.toLowerCase().includes(query) ||
+      servicesStr.includes(query)
+    );
+  });
+
+  const filteredPros = proLeads.filter((p) => {
+    if (!query) return true;
+    return (
+      p.name.toLowerCase().includes(query) ||
+      (p.businessName && p.businessName.toLowerCase().includes(query)) ||
+      p.email.toLowerCase().includes(query) ||
+      p.phone.toLowerCase().includes(query) ||
+      p.neighborhood.toLowerCase().includes(query) ||
+      p.serviceType.toLowerCase().includes(query)
+    );
+  });
+
+  const totalCount = clientLeads.length + proLeads.length;
+
   const exportCSV = () => {
     let csvContent = 'data:text/csv;charset=utf-8,';
 
-    if (activeTab === 'clients') {
-      csvContent += 'Name,Email,Phone,Neighborhood,Services,Date\n';
-      clientLeads.forEach((l) => {
-        const servicesStr = l.services.join(';');
-        csvContent += `"${l.name}","${l.email}","${l.phone}","${l.neighborhood}","${servicesStr}","${l.createdAt}"\n`;
+    if (activeTab === 'pros') {
+      csvContent += 'Type,Name,Business,Service,Email,Phone,Location,Date\n';
+      filteredPros.forEach((p) => {
+        csvContent += `"Beauty Pro","${p.name}","${p.businessName || ''}","${p.serviceType}","${p.email}","${p.phone}","${p.neighborhood}","${p.createdAt}"\n`;
+      });
+    } else if (activeTab === 'clients') {
+      csvContent += 'Type,Name,Email,Phone,Location,Requested Services,Date\n';
+      filteredClients.forEach((c) => {
+        const srvs = c.services.join(';');
+        csvContent += `"Client Lead","${c.name}","${c.email}","${c.phone}","${c.neighborhood}","${srvs}","${c.createdAt}"\n`;
       });
     } else {
-      csvContent += 'Name,Business,Role,Email,Phone,Neighborhood,Daily Slots,Date\n';
-      proLeads.forEach((p) => {
-        csvContent += `"${p.name}","${p.businessName}","${p.role}","${p.email}","${p.phone}","${p.neighborhood}","${p.dailySlotsCount}","${p.createdAt}"\n`;
+      csvContent += 'Type,Name,Business/Services,Email,Phone,Location,Date\n';
+      filteredClients.forEach((c) => {
+        csvContent += `"Client","${c.name}","${c.services.join(';')}","${c.email}","${c.phone}","${c.neighborhood}","${c.createdAt}"\n`;
+      });
+      filteredPros.forEach((p) => {
+        csvContent += `"Pro Partner","${p.name}","${p.businessName || p.serviceType}","${p.email}","${p.phone}","${p.neighborhood}","${p.createdAt}"\n`;
       });
     }
 
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement('a');
     link.setAttribute('href', encodedUri);
-    link.setAttribute('download', `mirro_${activeTab}_signups_${new Date().toISOString().slice(0, 10)}.csv`);
+    link.setAttribute('download', `mirro_registered_contacts_${activeTab}_${new Date().toISOString().slice(0, 10)}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -50,9 +88,13 @@ export const AdminSignupsModal: React.FC<AdminSignupsModalProps> = ({
   const copyContactList = () => {
     let list = '';
     if (activeTab === 'clients') {
-      list = clientLeads.map((c) => `${c.name} <${c.email}> - ${c.phone} (${c.neighborhood})`).join('\n');
+      list = filteredClients.map((c) => `${c.name} <${c.email}> - ${c.phone} (${c.neighborhood})`).join('\n');
+    } else if (activeTab === 'pros') {
+      list = filteredPros.map((p) => `${p.name} (${p.businessName || p.serviceType}) <${p.email}> - ${p.phone}`).join('\n');
     } else {
-      list = proLeads.map((p) => `${p.name} (${p.businessName}) <${p.email}> - ${p.phone}`).join('\n');
+      const cList = filteredClients.map((c) => `[Client] ${c.name} <${c.email}> - ${c.phone} (${c.neighborhood})`);
+      const pList = filteredPros.map((p) => `[Pro] ${p.name} (${p.businessName || p.serviceType}) <${p.email}> - ${p.phone}`);
+      list = [...cList, ...pList].join('\n');
     }
 
     navigator.clipboard.writeText(list);
@@ -62,19 +104,24 @@ export const AdminSignupsModal: React.FC<AdminSignupsModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 bg-stone-900/40 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
-      <div className="bg-white border border-stone-200/90 rounded-3xl p-6 sm:p-8 max-w-3xl w-full shadow-2xl animate-fadeIn my-8 text-stone-900 max-h-[90vh] flex flex-col">
+      <div className="bg-white border border-stone-200/90 rounded-3xl p-6 sm:p-8 max-w-4xl w-full shadow-2xl animate-fadeIn my-8 text-stone-900 max-h-[90vh] flex flex-col">
         {/* Modal Header */}
         <div className="flex items-center justify-between pb-4 border-b border-stone-200 mb-4 shrink-0">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-[#FAF8F5] border border-stone-200 text-stone-900 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-xl bg-stone-900 text-white flex items-center justify-center shadow-sm">
               <Users className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="font-serif text-xl font-medium text-stone-900">
-                Signups & Leads Dashboard
-              </h3>
-              <p className="text-xs text-stone-500 font-light">
-                View client SMS alert requests and beauty partner applications
+              <div className="flex items-center gap-2">
+                <h3 className="font-serif text-xl font-medium text-stone-900">
+                  Registered Contacts Directory
+                </h3>
+                <span className="px-2.5 py-0.5 rounded-full bg-stone-100 border border-stone-200 text-stone-800 text-xs font-mono font-medium">
+                  {totalCount} Total Registered
+                </span>
+              </div>
+              <p className="text-xs text-stone-500 font-light mt-0.5">
+                All registered clients, SMS deal subscribers, and salon partner applicants
               </p>
             </div>
           </div>
@@ -86,124 +133,171 @@ export const AdminSignupsModal: React.FC<AdminSignupsModalProps> = ({
           </button>
         </div>
 
-        {/* Tab & Action Controls */}
-        <div className="flex flex-wrap items-center justify-between gap-3 mb-4 shrink-0">
-          <div className="inline-flex items-center gap-1 bg-[#FAF8F5] p-1 rounded-2xl border border-stone-200">
-            <button
-              onClick={() => setActiveTab('clients')}
-              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-medium transition-all ${
-                activeTab === 'clients'
-                  ? 'bg-stone-900 text-white shadow-sm'
-                  : 'text-stone-600 hover:text-stone-900'
-              }`}
-            >
-              <UserCheck className="w-4 h-4" />
-              Client SMS Leads ({clientLeads.length})
-            </button>
-            <button
-              onClick={() => setActiveTab('pros')}
-              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-medium transition-all ${
-                activeTab === 'pros'
-                  ? 'bg-stone-900 text-white shadow-sm'
-                  : 'text-stone-600 hover:text-stone-900'
-              }`}
-            >
-              <Building2 className="w-4 h-4" />
-              Beauty Pros / Salons ({proLeads.length})
-            </button>
+        {/* Filter Controls & Search */}
+        <div className="space-y-3 mb-4 shrink-0">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+            {/* Filter Tabs */}
+            <div className="inline-flex items-center gap-1 bg-[#FAF8F5] p-1 rounded-2xl border border-stone-200 shrink-0">
+              <button
+                onClick={() => setActiveTab('all')}
+                className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-medium transition-all ${
+                  activeTab === 'all'
+                    ? 'bg-stone-900 text-white shadow-sm'
+                    : 'text-stone-600 hover:text-stone-900'
+                }`}
+              >
+                <Users className="w-3.5 h-3.5" />
+                All Contacts ({totalCount})
+              </button>
+              <button
+                onClick={() => setActiveTab('clients')}
+                className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-medium transition-all ${
+                  activeTab === 'clients'
+                    ? 'bg-stone-900 text-white shadow-sm'
+                    : 'text-stone-600 hover:text-stone-900'
+                }`}
+              >
+                <UserCheck className="w-3.5 h-3.5" />
+                Clients / Subscribers ({clientLeads.length})
+              </button>
+              <button
+                onClick={() => setActiveTab('pros')}
+                className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-medium transition-all ${
+                  activeTab === 'pros'
+                    ? 'bg-stone-900 text-white shadow-sm'
+                    : 'text-stone-600 hover:text-stone-900'
+                }`}
+              >
+                <Building2 className="w-3.5 h-3.5" />
+                Salon Partners ({proLeads.length})
+              </button>
+            </div>
+
+            {/* Actions */}
+            <div className="flex items-center gap-2">
+              <button
+                onClick={copyContactList}
+                disabled={totalCount === 0}
+                className="px-3 py-1.5 rounded-xl border border-stone-200 text-xs font-medium text-stone-700 hover:bg-stone-50 disabled:opacity-40 transition-all flex items-center gap-1.5"
+              >
+                {copiedText ? (
+                  <>
+                    <Check className="w-3.5 h-3.5 text-emerald-600" /> Copied!
+                  </>
+                ) : (
+                  <>
+                    <Copy className="w-3.5 h-3.5" /> Copy List
+                  </>
+                )}
+              </button>
+              <button
+                onClick={exportCSV}
+                disabled={totalCount === 0}
+                className="px-3.5 py-1.5 rounded-xl bg-stone-900 text-white text-xs font-medium hover:bg-stone-800 disabled:opacity-40 transition-all flex items-center gap-1.5 shadow-sm"
+              >
+                <Download className="w-3.5 h-3.5" /> Export CSV
+              </button>
+            </div>
           </div>
 
-          <div className="flex items-center gap-2">
-            <button
-              onClick={copyContactList}
-              disabled={activeTab === 'clients' ? clientLeads.length === 0 : proLeads.length === 0}
-              className="px-3.5 py-2 rounded-xl border border-stone-200 text-xs font-medium text-stone-700 hover:bg-stone-50 disabled:opacity-40 transition-all flex items-center gap-1.5"
-            >
-              {copiedText ? (
-                <>
-                  <Check className="w-3.5 h-3.5 text-emerald-600" /> Copied!
-                </>
-              ) : (
-                <>
-                  <Copy className="w-3.5 h-3.5" /> Copy List
-                </>
-              )}
-            </button>
-            <button
-              onClick={exportCSV}
-              disabled={activeTab === 'clients' ? clientLeads.length === 0 : proLeads.length === 0}
-              className="px-3.5 py-2 rounded-xl bg-stone-900 text-white text-xs font-medium hover:bg-stone-800 disabled:opacity-40 transition-all flex items-center gap-1.5 shadow-sm"
-            >
-              <Download className="w-3.5 h-3.5" /> Export CSV
-            </button>
+          {/* Search Input Bar */}
+          <div className="relative">
+            <Search className="w-4 h-4 text-stone-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search registered contacts by name, email, phone number, neighborhood, or service..."
+              className="w-full bg-[#FAF8F5] border border-stone-200 text-xs text-stone-900 placeholder-stone-400 pl-10 pr-4 py-2.5 rounded-2xl focus:outline-none focus:border-stone-400 transition-all"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-stone-400 hover:text-stone-700"
+              >
+                Clear
+              </button>
+            )}
           </div>
         </div>
 
         {/* Content Table / List */}
         <div className="overflow-y-auto flex-1 border border-stone-200/90 rounded-2xl bg-[#FAF8F5]">
-          {activeTab === 'clients' ? (
-            clientLeads.length === 0 ? (
-              <div className="py-12 text-center text-stone-500 font-light text-sm">
-                No client SMS signups yet. Submissions from the signup section will appear here automatically!
-              </div>
-            ) : (
-              <div className="divide-y divide-stone-200/80">
-                {clientLeads.map((lead, idx) => (
-                  <div key={idx} className="p-4 bg-white hover:bg-stone-50/50 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <span className="font-semibold text-stone-900 text-sm">{lead.name}</span>
-                        <span className="px-2 py-0.5 rounded-full bg-stone-100 text-stone-600 text-[10px] font-mono">
-                          {lead.createdAt ? new Date(lead.createdAt).toLocaleDateString() : 'Today'}
-                        </span>
-                      </div>
-                      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-stone-600 font-light">
-                        <span className="flex items-center gap-1">
-                          <Mail className="w-3.5 h-3.5 text-stone-400" /> {lead.email}
-                        </span>
-                        <span className="flex items-center gap-1 font-mono font-normal text-stone-800">
-                          <Phone className="w-3.5 h-3.5 text-stone-400" /> {lead.phone}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <MapPin className="w-3.5 h-3.5 text-stone-400" /> {lead.neighborhood || 'Toronto'}
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="flex flex-wrap gap-1">
-                      {lead.services.map((srv, sIdx) => (
-                        <span key={sIdx} className="px-2 py-0.5 rounded-lg bg-stone-100 border border-stone-200/60 text-stone-700 text-[10px]">
-                          {srv}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )
-          ) : proLeads.length === 0 ? (
-            <div className="py-12 text-center text-stone-500 font-light text-sm">
-              No stylist or salon partner applications yet. Submissions from the Partner section will appear here!
-            </div>
-          ) : (
+          {/* Render Clients if active tab is 'all' or 'clients' */}
+          {(activeTab === 'all' || activeTab === 'clients') && filteredClients.length > 0 && (
             <div className="divide-y divide-stone-200/80">
-              {proLeads.map((pro, idx) => (
-                <div key={idx} className="p-4 bg-white hover:bg-stone-50/50 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+              {activeTab === 'all' && (
+                <div className="px-4 py-2 bg-stone-100/80 border-b border-stone-200 text-[11px] font-semibold text-stone-600 uppercase tracking-wider flex items-center justify-between">
+                  <span>Registered Clients & SMS Subscribers ({filteredClients.length})</span>
+                </div>
+              )}
+              {filteredClients.map((lead, idx) => (
+                <div key={'c-' + idx} className="p-4 bg-white hover:bg-stone-50/50 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
-                      <span className="font-semibold text-stone-900 text-sm">{pro.name}</span>
-                      <span className="text-stone-500 font-light">({pro.businessName})</span>
-                      <span className="px-2 py-0.5 rounded-full bg-stone-100 text-stone-600 text-[10px] capitalize">
-                        {pro.role}
+                      <span className="font-semibold text-stone-900 text-sm">{lead.name}</span>
+                      <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200/60 text-[10px] font-medium">
+                        Client Subscriber
+                      </span>
+                      <span className="px-2 py-0.5 rounded-full bg-stone-100 text-stone-500 text-[10px] font-mono">
+                        {lead.createdAt}
                       </span>
                     </div>
                     <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-stone-600 font-light">
+                      <a href={`mailto:${lead.email}`} className="flex items-center gap-1 hover:text-stone-900 underline">
+                        <Mail className="w-3.5 h-3.5 text-stone-400" /> {lead.email}
+                      </a>
+                      <a href={`tel:${lead.phone}`} className="flex items-center gap-1 font-mono text-stone-800 hover:text-stone-900 underline">
+                        <Phone className="w-3.5 h-3.5 text-stone-400" /> {lead.phone}
+                      </a>
                       <span className="flex items-center gap-1">
+                        <MapPin className="w-3.5 h-3.5 text-stone-400" /> {lead.neighborhood || 'Toronto'}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap gap-1">
+                    {lead.services.map((srv, sIdx) => (
+                      <span key={sIdx} className="px-2 py-0.5 rounded-lg bg-stone-100 border border-stone-200/60 text-stone-700 text-[10px] capitalize">
+                        {srv.replace('_', ' ')}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Render Pros if active tab is 'all' or 'pros' */}
+          {(activeTab === 'all' || activeTab === 'pros') && filteredPros.length > 0 && (
+            <div className="divide-y divide-stone-200/80">
+              {activeTab === 'all' && (
+                <div className="px-4 py-2 bg-stone-100/80 border-b border-stone-200 text-[11px] font-semibold text-stone-600 uppercase tracking-wider flex items-center justify-between">
+                  <span>Registered Salon & Beauty Pro Partners ({filteredPros.length})</span>
+                </div>
+              )}
+              {filteredPros.map((pro, idx) => (
+                <div key={'p-' + idx} className="p-4 bg-white hover:bg-stone-50/50 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <span className="font-semibold text-stone-900 text-sm">{pro.name}</span>
+                      {pro.businessName && (
+                        <span className="text-stone-600 font-normal">({pro.businessName})</span>
+                      )}
+                      <span className="px-2 py-0.5 rounded-full bg-amber-50 text-amber-900 border border-amber-200/60 text-[10px] font-medium">
+                        Pro Partner
+                      </span>
+                      <span className="px-2 py-0.5 rounded-full bg-stone-100 text-stone-500 text-[10px] font-mono">
+                        {pro.createdAt}
+                      </span>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-stone-600 font-light">
+                      <a href={`mailto:${pro.email}`} className="flex items-center gap-1 hover:text-stone-900 underline">
                         <Mail className="w-3.5 h-3.5 text-stone-400" /> {pro.email}
-                      </span>
-                      <span className="flex items-center gap-1 font-mono font-normal text-stone-800">
+                      </a>
+                      <a href={`tel:${pro.phone}`} className="flex items-center gap-1 font-mono text-stone-800 hover:text-stone-900 underline">
                         <Phone className="w-3.5 h-3.5 text-stone-400" /> {pro.phone}
-                      </span>
+                      </a>
                       <span className="flex items-center gap-1">
                         <MapPin className="w-3.5 h-3.5 text-stone-400" /> {pro.neighborhood}
                       </span>
@@ -212,11 +306,26 @@ export const AdminSignupsModal: React.FC<AdminSignupsModalProps> = ({
 
                   <div className="text-right">
                     <span className="px-2.5 py-1 rounded-xl bg-stone-900 text-white text-[11px] font-medium">
-                      ~{pro.dailySlotsCount} slots/day
+                      {pro.serviceType}
                     </span>
                   </div>
                 </div>
               ))}
+            </div>
+          )}
+
+          {/* Empty Search / Empty Contacts State */}
+          {((activeTab === 'clients' && filteredClients.length === 0) ||
+            (activeTab === 'pros' && filteredPros.length === 0) ||
+            (activeTab === 'all' && filteredClients.length === 0 && filteredPros.length === 0)) && (
+            <div className="py-16 text-center text-stone-500 font-light text-sm px-4">
+              {searchQuery ? (
+                <>
+                  No registered contacts found matching "<strong className="text-stone-800">{searchQuery}</strong>".
+                </>
+              ) : (
+                <>No registered contacts in this list yet. Submissions from website forms will appear here!</>
+              )}
             </div>
           )}
         </div>
@@ -229,7 +338,7 @@ export const AdminSignupsModal: React.FC<AdminSignupsModalProps> = ({
             className="px-3 py-2 rounded-xl text-xs font-medium text-stone-400 hover:text-red-600 hover:bg-red-50 flex items-center gap-1 transition-colors"
           >
             <Trash2 className="w-3.5 h-3.5" />
-            Clear All Test Submissions
+            Reset All Contacts
           </button>
 
           <button
@@ -237,7 +346,7 @@ export const AdminSignupsModal: React.FC<AdminSignupsModalProps> = ({
             onClick={onClose}
             className="px-5 py-2.5 rounded-full text-xs font-medium bg-stone-900 text-white hover:bg-stone-800 transition-all"
           >
-            Close Dashboard
+            Close Directory
           </button>
         </div>
       </div>

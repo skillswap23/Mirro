@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Header } from './components/Header';
 import { Hero } from './components/Hero';
 import { HowItWorks } from './components/HowItWorks';
@@ -15,29 +15,13 @@ import { PrivacyPolicyModal } from './components/PrivacyPolicyModal';
 
 import { Deal, SiteConfig, ClientLead, ProLead } from './types';
 import { DEFAULT_SITE_CONFIG, INITIAL_DEALS } from './data/initialDeals';
+import { INITIAL_CLIENT_LEADS, INITIAL_PRO_LEADS } from './data/initialLeads';
 
 export default function App() {
-  // Load site configuration from LocalStorage or fallback to defaults
-  const [config, setConfig] = useState<SiteConfig>(() => {
-    try {
-      const saved = localStorage.getItem('themirro_site_config');
-      if (saved) return JSON.parse(saved);
-    } catch (e) {
-      console.error('Failed to parse site config from storage', e);
-    }
-    return DEFAULT_SITE_CONFIG;
-  });
-
-  // State for deals with LocalStorage persistence
-  const [deals, setDeals] = useState<Deal[]>(() => {
-    try {
-      const saved = localStorage.getItem('themirro_live_deals');
-      if (saved) return JSON.parse(saved);
-    } catch (e) {
-      console.error('Failed to parse deals from storage', e);
-    }
-    return INITIAL_DEALS;
-  });
+  const [config, setConfig] = useState<SiteConfig>(DEFAULT_SITE_CONFIG);
+  const [deals, setDeals] = useState<Deal[]>(INITIAL_DEALS);
+  const [clientLeads, setClientLeads] = useState<ClientLead[]>(INITIAL_CLIENT_LEADS);
+  const [proLeads, setProLeads] = useState<ProLead[]>(INITIAL_PRO_LEADS);
 
   // Admin Authentication State
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState<boolean>(() => {
@@ -48,26 +32,28 @@ export default function App() {
     }
   });
 
-  // Leads tracking with LocalStorage persistence
-  const [clientLeads, setClientLeads] = useState<ClientLead[]>(() => {
+  // Fetch central data from Express backend server
+  const fetchCentralData = async () => {
     try {
-      const saved = localStorage.getItem('themirro_client_leads');
-      if (saved) return JSON.parse(saved);
+      const res = await fetch('/api/data');
+      if (res.ok) {
+        const data = await res.json();
+        if (data.config) setConfig(data.config);
+        if (Array.isArray(data.clientLeads)) setClientLeads(data.clientLeads);
+        if (Array.isArray(data.proLeads)) setProLeads(data.proLeads);
+        if (Array.isArray(data.deals)) setDeals(data.deals);
+      }
     } catch (e) {
-      console.error('Failed to parse client leads', e);
+      console.error('Failed to fetch central data from server', e);
     }
-    return [];
-  });
+  };
 
-  const [proLeads, setProLeads] = useState<ProLead[]>(() => {
-    try {
-      const saved = localStorage.getItem('themirro_pro_leads');
-      if (saved) return JSON.parse(saved);
-    } catch (e) {
-      console.error('Failed to parse pro leads', e);
-    }
-    return [];
-  });
+  useEffect(() => {
+    fetchCentralData();
+    // Refresh central data every 10 seconds so signups appear immediately
+    const interval = setInterval(fetchCentralData, 10000);
+    return () => clearInterval(interval);
+  }, []);
 
   // Modals Visibility
   const [isConfigOpen, setIsConfigOpen] = useState(false);
@@ -112,81 +98,113 @@ export default function App() {
     }
   };
 
-  // Save config changes
-  const handleSaveConfig = (newConfig: SiteConfig) => {
+  // Save config changes to server
+  const handleSaveConfig = async (newConfig: SiteConfig) => {
     setConfig(newConfig);
     try {
-      localStorage.setItem('themirro_site_config', JSON.stringify(newConfig));
+      await fetch('/api/config', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newConfig),
+      });
     } catch (e) {
-      console.error('Failed to save site config to storage', e);
+      console.error('Failed to save site config to server', e);
     }
   };
 
-  const handleResetConfig = () => {
+  const handleResetConfig = async () => {
     setConfig(DEFAULT_SITE_CONFIG);
     try {
-      localStorage.removeItem('themirro_site_config');
+      await fetch('/api/config', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(DEFAULT_SITE_CONFIG),
+      });
     } catch (e) {
-      console.error('Failed to clear site config', e);
+      console.error('Failed to reset site config on server', e);
     }
   };
 
-  const handleAddDeal = (newDeal: Deal) => {
-    setDeals((prev) => {
-      const updated = [newDeal, ...prev];
-      try {
-        localStorage.setItem('themirro_live_deals', JSON.stringify(updated));
-      } catch (e) {
-        console.error(e);
+  const handleAddDeal = async (newDeal: Deal) => {
+    setDeals((prev) => [newDeal, ...prev]);
+    try {
+      const res = await fetch('/api/deals', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ deal: newDeal }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.deals) setDeals(data.deals);
       }
-      return updated;
-    });
+    } catch (e) {
+      console.error('Failed to save deal to server', e);
+    }
   };
 
-  const handleDeleteDeal = (dealId: string) => {
-    setDeals((prev) => {
-      const updated = prev.filter((d) => d.id !== dealId);
-      try {
-        localStorage.setItem('themirro_live_deals', JSON.stringify(updated));
-      } catch (e) {
-        console.error(e);
+  const handleDeleteDeal = async (dealId: string) => {
+    setDeals((prev) => prev.filter((d) => d.id !== dealId));
+    try {
+      const res = await fetch(`/api/deals/${dealId}`, {
+        method: 'DELETE',
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.deals) setDeals(data.deals);
       }
-      return updated;
-    });
+    } catch (e) {
+      console.error('Failed to delete deal from server', e);
+    }
   };
 
-  const handleAddClientLead = (lead: ClientLead) => {
-    setClientLeads((prev) => {
-      const updated = [lead, ...prev];
-      try {
-        localStorage.setItem('themirro_client_leads', JSON.stringify(updated));
-      } catch (e) {
-        console.error(e);
+  const handleAddClientLead = async (lead: ClientLead) => {
+    setClientLeads((prev) => [lead, ...prev]);
+    try {
+      const res = await fetch('/api/leads/client', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(lead),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.clientLeads) setClientLeads(data.clientLeads);
       }
-      return updated;
-    });
+    } catch (e) {
+      console.error('Failed to save client lead to server', e);
+    }
   };
 
-  const handleAddProLead = (lead: ProLead) => {
-    setProLeads((prev) => {
-      const updated = [lead, ...prev];
-      try {
-        localStorage.setItem('themirro_pro_leads', JSON.stringify(updated));
-      } catch (e) {
-        console.error(e);
+  const handleAddProLead = async (lead: ProLead) => {
+    setProLeads((prev) => [lead, ...prev]);
+    try {
+      const res = await fetch('/api/leads/pro', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(lead),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.proLeads) setProLeads(data.proLeads);
       }
-      return updated;
-    });
+    } catch (e) {
+      console.error('Failed to save pro lead to server', e);
+    }
   };
 
-  const handleClearLeads = () => {
+  const handleClearLeads = async () => {
     setClientLeads([]);
     setProLeads([]);
     try {
-      localStorage.removeItem('themirro_client_leads');
-      localStorage.removeItem('themirro_pro_leads');
+      const res = await fetch('/api/leads', {
+        method: 'DELETE',
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.clientLeads) setClientLeads(data.clientLeads);
+        if (data.proLeads) setProLeads(data.proLeads);
+      }
     } catch (e) {
-      console.error(e);
+      console.error('Failed to clear leads from server', e);
     }
   };
 

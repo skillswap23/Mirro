@@ -22,35 +22,34 @@ export const AdminAuthModal: React.FC<AdminAuthModalProps> = ({
 
   if (!isOpen) return null;
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setIsSubmitting(true);
 
-    setTimeout(() => {
-      setIsSubmitting(false);
+    try {
+      const res = await fetch('/api/admin/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email.trim(), password }),
+      });
 
-      const normalizedInputEmail = email.trim().toLowerCase();
-      const normalizedAdminEmail = adminEmail.trim().toLowerCase();
+      const data = await res.json();
 
-      // Retrieve custom set admin password or fallback to default secret
-      const storedPassword = localStorage.getItem('themirro_admin_password') || 'MirroAdmin2026!';
-
-      const isEmailValid =
-        normalizedInputEmail === normalizedAdminEmail ||
-        normalizedInputEmail.endsWith('@themirro.com');
-
-      const isPasswordValid = password === storedPassword || password === '1234' || password === 'admin';
-
-      if (isEmailValid && isPasswordValid) {
+      if (res.ok && data.success) {
         setEmail('');
         setPassword('');
         setError('');
         onAuthenticated();
       } else {
-        setError('Invalid admin credentials. Access denied.');
+        setError(data.error || 'Invalid admin credentials. Access denied.');
       }
-    }, 400);
+    } catch (err) {
+      console.error('Login request failed', err);
+      setError('Connection error. Could not authenticate.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const resetModal = () => {

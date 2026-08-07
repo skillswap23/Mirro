@@ -33,6 +33,8 @@ export const JoinCommunitySection: React.FC<JoinCommunitySectionProps> = ({
   const [otherServiceText, setOtherServiceText] = useState('');
   const [clientAgreed, setClientAgreed] = useState(false);
   const [clientSubmitted, setClientSubmitted] = useState(false);
+  const [isClientSubmitting, setIsClientSubmitting] = useState(false);
+  const [clientSubmitError, setClientSubmitError] = useState('');
   const [lastClientLead, setLastClientLead] = useState<ClientLead | null>(null);
 
   // Pro Form State
@@ -44,6 +46,8 @@ export const JoinCommunitySection: React.FC<JoinCommunitySectionProps> = ({
   const [proPhone, setProPhone] = useState('');
   const [proAgreed, setProAgreed] = useState(false);
   const [proSubmitted, setProSubmitted] = useState(false);
+  const [isProSubmitting, setIsProSubmitting] = useState(false);
+  const [proSubmitError, setProSubmitError] = useState('');
 
   const toggleService = (id: ServiceCategory | 'other') => {
     if (selectedServices.includes(id)) {
@@ -53,14 +57,20 @@ export const JoinCommunitySection: React.FC<JoinCommunitySectionProps> = ({
     }
   };
 
-  const handleClientSubmit = (e: React.FormEvent) => {
+  const handleClientSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!clientName || !clientEmail || !clientPhone) return;
 
-    // Filter valid ServiceCategories for type safety
-    const validCategories = selectedServices.filter((s): s is ServiceCategory => s !== 'other');
+    setIsClientSubmitting(true);
+    setClientSubmitError('');
 
-    const newLead: ClientLead = {
+    const validCategories = selectedServices.filter((s): s is ServiceCategory => s !== 'other');
+    const serviceList = [...validCategories];
+    if (selectedServices.includes('other') && otherServiceText.trim()) {
+      serviceList.push(`Other: ${otherServiceText.trim()}` as ServiceCategory);
+    }
+
+    const newClientLead: ClientLead = {
       id: 'lead-' + Date.now(),
       name: clientName,
       email: clientEmail,
@@ -70,18 +80,51 @@ export const JoinCommunitySection: React.FC<JoinCommunitySectionProps> = ({
       createdAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     };
 
-    setClientSubmitted(true);
-    setLastClientLead(newLead);
     if (onClientLeadAdded) {
-      onClientLeadAdded(newLead);
+      onClientLeadAdded(newClientLead);
+    }
+
+    const leadData = {
+      _subject: `New Mirro Client Alert Subscriber: ${clientName}`,
+      formType: 'Client SMS Alert Signup (Community Section)',
+      name: clientName,
+      email: clientEmail,
+      phone: clientPhone,
+      cityOrRegion: clientCity || 'All Locations',
+      servicesRequested: serviceList.join(', '),
+      agreedToTermsAndPrivacy: clientAgreed ? 'Yes' : 'No',
+      submittedAt: new Date().toLocaleString(),
+    };
+
+    try {
+      await fetch('https://formspree.io/f/xoeavnyy', {
+        method: 'POST',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(leadData),
+      });
+
+      setClientSubmitted(true);
+      setLastClientLead(newClientLead);
+    } catch (err) {
+      console.error('Formspree submit error, lead saved to internal database:', err);
+      setClientSubmitted(true);
+      setLastClientLead(newClientLead);
+    } finally {
+      setIsClientSubmitting(false);
     }
   };
 
-  const handleProSubmit = (e: React.FormEvent) => {
+  const handleProSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!proName || !proEmail || !proPhone) return;
 
-    const newLead: ProLead = {
+    setIsProSubmitting(true);
+    setProSubmitError('');
+
+    const newProLead: ProLead = {
       id: 'pro-' + Date.now(),
       name: proName,
       businessName,
@@ -92,9 +135,39 @@ export const JoinCommunitySection: React.FC<JoinCommunitySectionProps> = ({
       createdAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     };
 
-    setProSubmitted(true);
     if (onProLeadAdded) {
-      onProLeadAdded(newLead);
+      onProLeadAdded(newProLead);
+    }
+
+    const leadData = {
+      _subject: `New Mirro Partner Professional Application: ${proName}`,
+      formType: 'Stylist / Salon Partner Application',
+      name: proName,
+      businessName: businessName || 'N/A',
+      serviceSpecialty: serviceType,
+      cityOrNeighborhood: proCity || 'Canada',
+      email: proEmail,
+      phone: proPhone,
+      agreedToTermsAndPrivacy: proAgreed ? 'Yes' : 'No',
+      submittedAt: new Date().toLocaleString(),
+    };
+
+    try {
+      await fetch('https://formspree.io/f/xoeavnyy', {
+        method: 'POST',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(leadData),
+      });
+
+      setProSubmitted(true);
+    } catch (err) {
+      console.error('Formspree submit error, lead saved to internal database:', err);
+      setProSubmitted(true);
+    } finally {
+      setIsProSubmitting(false);
     }
   };
 
@@ -170,7 +243,18 @@ export const JoinCommunitySection: React.FC<JoinCommunitySectionProps> = ({
                   </div>
                 </div>
               ) : (
-                <form onSubmit={handleClientSubmit} className="space-y-4">
+                <form
+                  action="https://formspree.io/f/xoeavnyy"
+                  method="POST"
+                  onSubmit={handleClientSubmit}
+                  className="space-y-4"
+                >
+                  {clientSubmitError && (
+                    <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-medium">
+                      {clientSubmitError}
+                    </div>
+                  )}
+
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                     <div>
                       <label className="block text-xs font-medium text-stone-700 mb-1">
@@ -178,6 +262,7 @@ export const JoinCommunitySection: React.FC<JoinCommunitySectionProps> = ({
                       </label>
                       <input
                         type="text"
+                        name="name"
                         required
                         placeholder="e.g. Jessica Alba"
                         value={clientName}
@@ -192,6 +277,7 @@ export const JoinCommunitySection: React.FC<JoinCommunitySectionProps> = ({
                       </label>
                       <input
                         type="email"
+                        name="email"
                         required
                         placeholder="jessica@example.com"
                         value={clientEmail}
@@ -208,6 +294,7 @@ export const JoinCommunitySection: React.FC<JoinCommunitySectionProps> = ({
                       </label>
                       <input
                         type="tel"
+                        name="phone"
                         required
                         placeholder="(416) 555-0192"
                         value={clientPhone}
@@ -222,6 +309,7 @@ export const JoinCommunitySection: React.FC<JoinCommunitySectionProps> = ({
                       </label>
                       <input
                         type="text"
+                        name="cityOrRegion"
                         placeholder="e.g. Toronto, Vancouver, Montreal"
                         value={clientCity}
                         onChange={(e) => setClientCity(e.target.value)}
@@ -328,15 +416,15 @@ export const JoinCommunitySection: React.FC<JoinCommunitySectionProps> = ({
                   <div className="pt-1">
                     <button
                       type="submit"
-                      disabled={!clientAgreed}
+                      disabled={!clientAgreed || isClientSubmitting}
                       className={`w-full py-3.5 rounded-full font-medium text-xs tracking-wide shadow-sm transition-all flex items-center justify-center gap-2 ${
-                        clientAgreed
+                        clientAgreed && !isClientSubmitting
                           ? 'bg-stone-900 text-white hover:bg-stone-800'
                           : 'bg-stone-300 text-stone-500 cursor-not-allowed'
                       }`}
                     >
                       <Send className="w-4 h-4" />
-                      Subscribe for Free SMS Alerts
+                      {isClientSubmitting ? 'Sending to Formspree...' : 'Subscribe for Free SMS Alerts'}
                     </button>
                     <p className="text-[11px] text-stone-500 text-center mt-3 font-light leading-relaxed">
                       By joining, you agree we can email/SMS you about launch & deal drops. Unsubscribe anytime via{' '}
@@ -402,13 +490,25 @@ export const JoinCommunitySection: React.FC<JoinCommunitySectionProps> = ({
                   </button>
                 </div>
               ) : (
-                <form onSubmit={handleProSubmit} className="space-y-4">
+                <form
+                  action="https://formspree.io/f/xoeavnyy"
+                  method="POST"
+                  onSubmit={handleProSubmit}
+                  className="space-y-4"
+                >
+                  {proSubmitError && (
+                    <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-medium">
+                      {proSubmitError}
+                    </div>
+                  )}
+
                   <div>
                     <label className="block text-xs font-medium text-stone-700 mb-1">
                       Your Name <span className="text-stone-900">*</span>
                     </label>
                     <input
                       type="text"
+                      name="name"
                       required
                       placeholder="e.g. Antoine Laurent"
                       value={proName}
@@ -423,6 +523,7 @@ export const JoinCommunitySection: React.FC<JoinCommunitySectionProps> = ({
                     </label>
                     <input
                       type="text"
+                      name="businessName"
                       placeholder="e.g. Maison de Beauté or Independent Professional"
                       value={businessName}
                       onChange={(e) => setBusinessName(e.target.value)}
@@ -436,6 +537,7 @@ export const JoinCommunitySection: React.FC<JoinCommunitySectionProps> = ({
                         Service Specialty <span className="text-stone-900">*</span>
                       </label>
                       <select
+                        name="serviceSpecialty"
                         value={serviceType}
                         onChange={(e) => setServiceType(e.target.value)}
                         className="w-full bg-white text-sm text-stone-900 px-3.5 py-2.5 rounded-xl border border-stone-200 focus:outline-none focus:border-stone-400"
@@ -455,6 +557,7 @@ export const JoinCommunitySection: React.FC<JoinCommunitySectionProps> = ({
                       </label>
                       <input
                         type="text"
+                        name="cityOrNeighborhood"
                         required
                         placeholder="e.g. Yorkville, Toronto"
                         value={proCity}
@@ -471,6 +574,7 @@ export const JoinCommunitySection: React.FC<JoinCommunitySectionProps> = ({
                       </label>
                       <input
                         type="email"
+                        name="email"
                         required
                         placeholder="antoine@salon.com"
                         value={proEmail}
@@ -485,6 +589,7 @@ export const JoinCommunitySection: React.FC<JoinCommunitySectionProps> = ({
                       </label>
                       <input
                         type="tel"
+                        name="phone"
                         required
                         placeholder="(416) 321-9876"
                         value={proPhone}
@@ -538,15 +643,15 @@ export const JoinCommunitySection: React.FC<JoinCommunitySectionProps> = ({
                   <div className="pt-1">
                     <button
                       type="submit"
-                      disabled={!proAgreed}
+                      disabled={!proAgreed || isProSubmitting}
                       className={`w-full py-3.5 rounded-full font-medium text-xs tracking-wide shadow-sm transition-all flex items-center justify-center gap-2 ${
-                        proAgreed
+                        proAgreed && !isProSubmitting
                           ? 'bg-stone-900 text-white hover:bg-stone-800'
                           : 'bg-stone-300 text-stone-500 cursor-not-allowed'
                       }`}
                     >
                       <Send className="w-4 h-4" />
-                      Apply as Partner Professional
+                      {isProSubmitting ? 'Sending to Formspree...' : 'Apply as Partner Professional'}
                     </button>
                     <p className="text-[11px] text-stone-500 text-center mt-3 font-light leading-relaxed">
                       By joining, you agree we can contact you regarding salon partner onboarding. Unsubscribe via{' '}

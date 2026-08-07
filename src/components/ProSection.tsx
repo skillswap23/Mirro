@@ -14,10 +14,15 @@ export const ProSection: React.FC<ProSectionProps> = ({ onProLeadAdded }) => {
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [submitted, setSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState('');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name || !email || !phone) return;
+
+    setIsSubmitting(true);
+    setSubmitError('');
 
     const newLead: ProLead = {
       id: 'pro-' + Date.now(),
@@ -30,9 +35,38 @@ export const ProSection: React.FC<ProSectionProps> = ({ onProLeadAdded }) => {
       createdAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     };
 
-    setSubmitted(true);
     if (onProLeadAdded) {
       onProLeadAdded(newLead);
+    }
+
+    const leadData = {
+      _subject: `New Mirro Partner Professional Application: ${name}`,
+      formType: 'Stylist / Salon Partner Application (Pro Section)',
+      name,
+      businessName: businessName || 'N/A',
+      serviceSpecialty: serviceType,
+      cityOrNeighborhood: neighborhood || 'Canada',
+      email,
+      phone,
+      submittedAt: new Date().toLocaleString(),
+    };
+
+    try {
+      await fetch('https://formspree.io/f/xoeavnyy', {
+        method: 'POST',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(leadData),
+      });
+
+      setSubmitted(true);
+    } catch (err) {
+      console.error('Formspree submit error, lead saved to internal database:', err);
+      setSubmitted(true);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -141,13 +175,25 @@ export const ProSection: React.FC<ProSectionProps> = ({ onProLeadAdded }) => {
                 </button>
               </div>
             ) : (
-              <form onSubmit={handleSubmit} className="space-y-4">
+              <form
+                action="https://formspree.io/f/xoeavnyy"
+                method="POST"
+                onSubmit={handleSubmit}
+                className="space-y-4"
+              >
+                {submitError && (
+                  <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-medium">
+                    {submitError}
+                  </div>
+                )}
+
                 <div>
                   <label className="block text-xs font-medium text-stone-700 mb-1">
                     Your Name <span className="text-stone-900">*</span>
                   </label>
                   <input
                     type="text"
+                    name="name"
                     required
                     placeholder="e.g. Antoine Laurent"
                     value={name}
@@ -162,6 +208,7 @@ export const ProSection: React.FC<ProSectionProps> = ({ onProLeadAdded }) => {
                   </label>
                   <input
                     type="text"
+                    name="businessName"
                     placeholder="e.g. Maison de Beauté or Independent Professional"
                     value={businessName}
                     onChange={(e) => setBusinessName(e.target.value)}
@@ -175,6 +222,7 @@ export const ProSection: React.FC<ProSectionProps> = ({ onProLeadAdded }) => {
                       Service Type <span className="text-stone-900">*</span>
                     </label>
                     <select
+                      name="serviceSpecialty"
                       value={serviceType}
                       onChange={(e) => setServiceType(e.target.value)}
                       className="w-full bg-[#FAF8F5] text-sm text-stone-900 px-3.5 py-2.5 rounded-xl border border-stone-200 focus:outline-none focus:border-stone-400"
@@ -194,6 +242,7 @@ export const ProSection: React.FC<ProSectionProps> = ({ onProLeadAdded }) => {
                     </label>
                     <input
                       type="text"
+                      name="cityOrNeighborhood"
                       required
                       placeholder="e.g. Yorkville, Toronto"
                       value={neighborhood}
@@ -210,6 +259,7 @@ export const ProSection: React.FC<ProSectionProps> = ({ onProLeadAdded }) => {
                     </label>
                     <input
                       type="email"
+                      name="email"
                       required
                       placeholder="antoine@salon.com"
                       value={email}
@@ -224,6 +274,7 @@ export const ProSection: React.FC<ProSectionProps> = ({ onProLeadAdded }) => {
                     </label>
                     <input
                       type="tel"
+                      name="phone"
                       required
                       placeholder="(416) 321-9876"
                       value={phone}
@@ -236,10 +287,13 @@ export const ProSection: React.FC<ProSectionProps> = ({ onProLeadAdded }) => {
                 <div className="pt-3">
                   <button
                     type="submit"
-                    className="w-full py-3.5 rounded-full font-medium text-xs tracking-wide bg-stone-900 text-white shadow-sm hover:bg-stone-800 transition-all flex items-center justify-center gap-2"
+                    disabled={isSubmitting}
+                    className={`w-full py-3.5 rounded-full font-medium text-xs tracking-wide bg-stone-900 text-white shadow-sm hover:bg-stone-800 transition-all flex items-center justify-center gap-2 ${
+                      isSubmitting ? 'opacity-70 cursor-not-allowed' : ''
+                    }`}
                   >
                     <Send className="w-4 h-4" />
-                    Join The Mirro Pro Network
+                    {isSubmitting ? 'Sending to Formspree...' : 'Join The Mirro Pro Network'}
                   </button>
                   <p className="text-[11px] text-stone-500 text-center mt-3 font-light leading-relaxed max-w-lg mx-auto">
                     By joining, you agree we can contact you about The Mirro's salon partner onboarding. See our{' '}

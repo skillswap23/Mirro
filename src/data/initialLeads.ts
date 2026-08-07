@@ -1,0 +1,63 @@
+import { ClientLead, ProLead } from '../types';
+
+export const INITIAL_CLIENT_LEADS: ClientLead[] = [
+  {
+    id: 'lead-101',
+    name: 'Sarah Jenkins',
+    email: 'sarah.j@gmail.com',
+    phone: '+1 (416) 555-0192',
+    neighborhood: 'Yorkville, Toronto',
+    services: ['hair', 'nails'],
+    createdAt: 'Aug 5, 2026, 2:15 PM',
+  },
+  {
+    id: 'lead-102',
+    name: 'Maya Lin',
+    email: 'maya.lin@outlook.com',
+    phone: '+1 (647) 555-0143',
+    neighborhood: 'King West, Toronto',
+    services: ['brows_lashes', 'skin_facials'],
+    createdAt: 'Aug 5, 2026, 4:30 PM',
+  },
+  {
+    id: 'lead-103',
+    name: 'Jessica Taylor',
+    email: 'jess.taylor@yahoo.ca',
+    phone: '+1 (416) 555-0188',
+    neighborhood: 'Queen West, Toronto',
+    services: ['hair', 'makeup'],
+    createdAt: 'Aug 6, 2026, 10:05 AM',
+  },
+  {
+    id: 'lead-104',
+    name: 'Amanda Ross',
+    email: 'amanda.ross@gmail.com',
+    phone: '+1 (647) 555-0210',
+    neighborhood: 'Leslieville, Toronto',
+    services: ['nails', 'brows_lashes'],
+    createdAt: 'Aug 6, 2026, 11:40 AM',
+  },
+];
+
+export const INITIAL_PRO_LEADS: ProLead[] = [
+  {
+    id: 'pro-201',
+    name: 'Elena Rostova',
+    businessName: 'Glow Hair Studio',
+    serviceType: 'Hair Styling & Color',
+    neighborhood: 'Yorkville, Toronto',
+    email: 'elena@glowhairstudio.ca',
+    phone: '+1 (416) 555-0812',
+    createdAt: 'Aug 4, 2026, 1:20 PM',
+  },
+  {
+    id: 'pro-202',
+    name: 'Marcus Vance',
+    businessName: 'Vance Nail Bar',
+    serviceType: 'Nails & Gel Art',
+    neighborhood: 'Dundas West, Toronto',
+    email: 'marcus@vancenails.com',
+    phone: '+1 (647) 555-0941',
+    createdAt: 'Aug 5, 2026, 9:15 AM',
+  },
+];

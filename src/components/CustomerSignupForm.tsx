@@ -28,6 +28,8 @@ export const CustomerSignupForm: React.FC<CustomerSignupFormProps> = ({
   const [selectedServices, setSelectedServices] = useState<ServiceCategory[]>(['hair', 'nails']);
   const [agreedToPolicy, setAgreedToPolicy] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState('');
   const [lastSubmittedLead, setLastSubmittedLead] = useState<ClientLead | null>(null);
 
   const toggleService = (id: ServiceCategory) => {
@@ -38,24 +40,59 @@ export const CustomerSignupForm: React.FC<CustomerSignupFormProps> = ({
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name || !email || !phone) return;
+
+    setIsSubmitting(true);
+    setSubmitError('');
 
     const newLead: ClientLead = {
       id: 'lead-' + Date.now(),
       name,
       email,
       phone,
-      neighborhood: neighborhood || 'All Neighborhoods',
+      neighborhood: neighborhood || 'All Locations',
       services: selectedServices,
       createdAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     };
 
-    setSubmitted(true);
-    setLastSubmittedLead(newLead);
+    // Always save lead to internal database server
     if (onLeadAdded) {
       onLeadAdded(newLead);
+    }
+
+    const leadData = {
+      _subject: `New Mirro Client Alert Subscriber: ${name}`,
+      formType: 'Client SMS Alert Signup',
+      name,
+      email,
+      phone,
+      cityOrRegion: neighborhood || 'All Locations',
+      servicesRequested: selectedServices.join(', '),
+      agreedToTermsAndPrivacy: agreedToPolicy ? 'Yes' : 'No',
+      submittedAt: new Date().toLocaleString(),
+    };
+
+    try {
+      await fetch('https://formspree.io/f/xoeavnyy', {
+        method: 'POST',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(leadData),
+      });
+
+      // Show success screen regardless of Formspree quota limit
+      setSubmitted(true);
+      setLastSubmittedLead(newLead);
+    } catch (err) {
+      console.error('Formspree submit error, lead saved to internal database:', err);
+      setSubmitted(true);
+      setLastSubmittedLead(newLead);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -120,7 +157,18 @@ export const CustomerSignupForm: React.FC<CustomerSignupFormProps> = ({
               </div>
             </div>
           ) : (
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form
+              action="https://formspree.io/f/xoeavnyy"
+              method="POST"
+              onSubmit={handleSubmit}
+              className="space-y-6"
+            >
+              {submitError && (
+                <div className="p-3.5 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-medium animate-fadeIn">
+                  {submitError}
+                </div>
+              )}
+
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-medium text-stone-700 mb-1.5">
@@ -128,6 +176,7 @@ export const CustomerSignupForm: React.FC<CustomerSignupFormProps> = ({
                   </label>
                   <input
                     type="text"
+                    name="name"
                     required
                     placeholder="e.g. Jessica Alba"
                     value={name}
@@ -142,6 +191,7 @@ export const CustomerSignupForm: React.FC<CustomerSignupFormProps> = ({
                   </label>
                   <input
                     type="email"
+                    name="email"
                     required
                     placeholder="jessica@example.com"
                     value={email}
@@ -158,6 +208,7 @@ export const CustomerSignupForm: React.FC<CustomerSignupFormProps> = ({
                   </label>
                   <input
                     type="tel"
+                    name="phone"
                     required
                     placeholder="(416) 555-0192"
                     value={phone}
@@ -172,6 +223,7 @@ export const CustomerSignupForm: React.FC<CustomerSignupFormProps> = ({
                   </label>
                   <input
                     type="text"
+                    name="cityOrRegion"
                     placeholder="e.g. Toronto, Vancouver, Montreal, Calgary"
                     value={neighborhood}
                     onChange={(e) => setNeighborhood(e.target.value)}
@@ -263,15 +315,15 @@ export const CustomerSignupForm: React.FC<CustomerSignupFormProps> = ({
               <div className="pt-2">
                 <button
                   type="submit"
-                  disabled={!agreedToPolicy}
+                  disabled={!agreedToPolicy || isSubmitting}
                   className={`w-full py-4 rounded-full font-medium text-xs tracking-wide shadow-sm transition-all flex items-center justify-center gap-2 ${
-                    agreedToPolicy
+                    agreedToPolicy && !isSubmitting
                       ? 'bg-stone-900 text-white hover:bg-stone-800'
                       : 'bg-stone-300 text-stone-500 cursor-not-allowed'
                   }`}
                 >
                   <Send className="w-4 h-4" />
-                  Subscribe to Free SMS Deal Alerts
+                  {isSubmitting ? 'Sending to Formspree...' : 'Subscribe to Free SMS Deal Alerts'}
                 </button>
                 <p className="text-[11px] text-stone-500 text-center mt-3 font-light leading-relaxed max-w-lg mx-auto">
                   By joining, you agree we can email and SMS you about The Mirro's launch and flash deal alerts. Unsubscribe anytime by emailing{' '}

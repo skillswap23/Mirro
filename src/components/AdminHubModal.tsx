@@ -31,19 +31,29 @@ export const AdminHubModal: React.FC<AdminHubModalProps> = ({
 
   if (!isOpen) return null;
 
-  const handleSavePassword = (e: React.FormEvent) => {
+  const handleSavePassword = async (e: React.FormEvent) => {
     e.preventDefault();
     if (newPassword.trim().length >= 4) {
       try {
-        localStorage.setItem('themirro_admin_password', newPassword.trim());
-        setPasswordSaved(true);
-        setNewPassword('');
-        setTimeout(() => {
-          setPasswordSaved(false);
-          setShowPasswordChange(false);
-        }, 1500);
+        const res = await fetch('/api/admin/change-password', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ newPassword: newPassword.trim() }),
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+          setPasswordSaved(true);
+          setNewPassword('');
+          setTimeout(() => {
+            setPasswordSaved(false);
+            setShowPasswordChange(false);
+          }, 1500);
+        } else {
+          alert(data.error || 'Failed to update password on server');
+        }
       } catch (err) {
         console.error('Failed to update password', err);
+        alert('Server error updating password');
       }
     }
   };
@@ -98,7 +108,7 @@ export const AdminHubModal: React.FC<AdminHubModalProps> = ({
             <ChevronRight className="w-5 h-5 text-stone-400 group-hover:translate-x-0.5 transition-transform shrink-0" />
           </button>
 
-          {/* Signups & Leads Card */}
+          {/* Registered Contacts & Leads Card */}
           <button
             onClick={() => {
               onClose();
@@ -112,13 +122,13 @@ export const AdminHubModal: React.FC<AdminHubModalProps> = ({
               </div>
               <div>
                 <div className="flex items-center gap-2">
-                  <h4 className="font-medium text-sm text-stone-900">Signups & Leads Dashboard</h4>
+                  <h4 className="font-semibold text-sm text-stone-900">Registered Contacts & Leads</h4>
                   <span className="px-2 py-0.5 rounded-full bg-stone-900 text-white text-[10px] font-mono font-medium">
-                    {clientLeads.length + proLeads.length} total
+                    {clientLeads.length + proLeads.length} contacts
                   </span>
                 </div>
                 <p className="text-xs text-stone-500 font-light mt-0.5">
-                  View {clientLeads.length} client SMS alert requests and {proLeads.length} salon partner signups.
+                  Access all registered clients ({clientLeads.length}), email/SMS subscribers, and salon partners ({proLeads.length}).
                 </p>
               </div>
             </div>
