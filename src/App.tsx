@@ -35,23 +35,31 @@ export default function App() {
   // Fetch central data from Express backend server
   const fetchCentralData = async () => {
     try {
-      const res = await fetch('/api/data');
+      const endpoint = typeof window !== 'undefined' ? `${window.location.origin}/api/data` : '/api/data';
+      const res = await fetch(endpoint, {
+        headers: { Accept: 'application/json' },
+      });
       if (res.ok) {
-        const data = await res.json();
-        if (data.config) setConfig(data.config);
-        if (Array.isArray(data.clientLeads)) setClientLeads(data.clientLeads);
-        if (Array.isArray(data.proLeads)) setProLeads(data.proLeads);
-        if (Array.isArray(data.deals)) setDeals(data.deals);
+        const contentType = res.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+          const data = await res.json();
+          if (data && typeof data === 'object') {
+            if (data.config) setConfig(data.config);
+            if (Array.isArray(data.clientLeads)) setClientLeads(data.clientLeads);
+            if (Array.isArray(data.proLeads)) setProLeads(data.proLeads);
+            if (Array.isArray(data.deals)) setDeals(data.deals);
+          }
+        }
       }
     } catch (e) {
-      console.error('Failed to fetch central data from server', e);
+      // Quietly swallow transient polling network glitch
     }
   };
 
   useEffect(() => {
     fetchCentralData();
-    // Refresh central data every 10 seconds so signups appear immediately
-    const interval = setInterval(fetchCentralData, 10000);
+    // Refresh central data every 5 seconds so signups appear across sessions
+    const interval = setInterval(fetchCentralData, 5000);
     return () => clearInterval(interval);
   }, []);
 
@@ -102,92 +110,123 @@ export default function App() {
   const handleSaveConfig = async (newConfig: SiteConfig) => {
     setConfig(newConfig);
     try {
-      await fetch('/api/config', {
+      const endpoint = typeof window !== 'undefined' ? `${window.location.origin}/api/config` : '/api/config';
+      await fetch(endpoint, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
         body: JSON.stringify(newConfig),
       });
     } catch (e) {
-      console.error('Failed to save site config to server', e);
+      console.warn('Failed to save site config to server:', e);
     }
   };
 
   const handleResetConfig = async () => {
     setConfig(DEFAULT_SITE_CONFIG);
     try {
-      await fetch('/api/config', {
+      const endpoint = typeof window !== 'undefined' ? `${window.location.origin}/api/config` : '/api/config';
+      await fetch(endpoint, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
         body: JSON.stringify(DEFAULT_SITE_CONFIG),
       });
     } catch (e) {
-      console.error('Failed to reset site config on server', e);
+      console.warn('Failed to reset site config on server:', e);
     }
   };
 
   const handleAddDeal = async (newDeal: Deal) => {
     setDeals((prev) => [newDeal, ...prev]);
     try {
-      const res = await fetch('/api/deals', {
+      const endpoint = typeof window !== 'undefined' ? `${window.location.origin}/api/deals` : '/api/deals';
+      const res = await fetch(endpoint, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
         body: JSON.stringify({ deal: newDeal }),
       });
       if (res.ok) {
-        const data = await res.json();
-        if (data.deals) setDeals(data.deals);
+        const contentType = res.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+          const data = await res.json();
+          if (data.deals) setDeals(data.deals);
+        }
       }
     } catch (e) {
-      console.error('Failed to save deal to server', e);
+      console.warn('Failed to save deal to server:', e);
     }
   };
 
   const handleDeleteDeal = async (dealId: string) => {
     setDeals((prev) => prev.filter((d) => d.id !== dealId));
     try {
-      const res = await fetch(`/api/deals/${dealId}`, {
+      const endpoint = typeof window !== 'undefined' ? `${window.location.origin}/api/deals/${dealId}` : `/api/deals/${dealId}`;
+      const res = await fetch(endpoint, {
         method: 'DELETE',
+        headers: { Accept: 'application/json' },
       });
       if (res.ok) {
-        const data = await res.json();
-        if (data.deals) setDeals(data.deals);
+        const contentType = res.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+          const data = await res.json();
+          if (data.deals) setDeals(data.deals);
+        }
       }
     } catch (e) {
-      console.error('Failed to delete deal from server', e);
+      console.warn('Failed to delete deal from server:', e);
     }
   };
 
   const handleAddClientLead = async (lead: ClientLead) => {
-    setClientLeads((prev) => [lead, ...prev]);
-    try {
-      const res = await fetch('/api/leads/client', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(lead),
-      });
-      if (res.ok) {
-        const data = await res.json();
-        if (data.clientLeads) setClientLeads(data.clientLeads);
+    setClientLeads((prev) => {
+      if (prev.some((l) => l.id === lead.id)) return prev;
+      return [lead, ...prev];
+    });
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        const endpoint = typeof window !== 'undefined' ? `${window.location.origin}/api/leads/client` : '/api/leads/client';
+        const res = await fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+          body: JSON.stringify(lead),
+        });
+        if (res.ok) {
+          const contentType = res.headers.get('content-type');
+          if (contentType && contentType.includes('application/json')) {
+            const data = await res.json();
+            if (Array.isArray(data.clientLeads)) setClientLeads(data.clientLeads);
+          }
+          break;
+        }
+      } catch (e) {
+        await new Promise((r) => setTimeout(r, 600));
       }
-    } catch (e) {
-      console.error('Failed to save client lead to server', e);
     }
   };
 
   const handleAddProLead = async (lead: ProLead) => {
-    setProLeads((prev) => [lead, ...prev]);
-    try {
-      const res = await fetch('/api/leads/pro', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(lead),
-      });
-      if (res.ok) {
-        const data = await res.json();
-        if (data.proLeads) setProLeads(data.proLeads);
+    setProLeads((prev) => {
+      if (prev.some((l) => l.id === lead.id)) return prev;
+      return [lead, ...prev];
+    });
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        const endpoint = typeof window !== 'undefined' ? `${window.location.origin}/api/leads/pro` : '/api/leads/pro';
+        const res = await fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+          body: JSON.stringify(lead),
+        });
+        if (res.ok) {
+          const contentType = res.headers.get('content-type');
+          if (contentType && contentType.includes('application/json')) {
+            const data = await res.json();
+            if (Array.isArray(data.proLeads)) setProLeads(data.proLeads);
+          }
+          break;
+        }
+      } catch (e) {
+        await new Promise((r) => setTimeout(r, 600));
       }
-    } catch (e) {
-      console.error('Failed to save pro lead to server', e);
     }
   };
 
@@ -195,16 +234,21 @@ export default function App() {
     setClientLeads([]);
     setProLeads([]);
     try {
-      const res = await fetch('/api/leads', {
+      const endpoint = typeof window !== 'undefined' ? `${window.location.origin}/api/leads` : '/api/leads';
+      const res = await fetch(endpoint, {
         method: 'DELETE',
+        headers: { Accept: 'application/json' },
       });
       if (res.ok) {
-        const data = await res.json();
-        if (data.clientLeads) setClientLeads(data.clientLeads);
-        if (data.proLeads) setProLeads(data.proLeads);
+        const contentType = res.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+          const data = await res.json();
+          if (data.clientLeads) setClientLeads(data.clientLeads);
+          if (data.proLeads) setProLeads(data.proLeads);
+        }
       }
     } catch (e) {
-      console.error('Failed to clear leads from server', e);
+      console.warn('Failed to clear leads from server:', e);
     }
   };
 
@@ -302,6 +346,8 @@ export default function App() {
         clientLeads={clientLeads}
         proLeads={proLeads}
         onClearLeads={handleClearLeads}
+        config={config}
+        onSaveConfig={handleSaveConfig}
       />
     </div>
   );

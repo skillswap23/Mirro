@@ -19,7 +19,10 @@ const defaultData = {
     discountPercentage: 50,
     airtableEmbedUrl: "https://airtable.com/embed/app8j1fK293K1L8P/shr8K29L0xZp9",
     calendlyBaseUrl: "https://calendly.com/themirro",
-    contactEmail: "faith@themirro.com"
+    contactEmail: "faith@themirro.com",
+    googleSheetUrl: "https://docs.google.com/spreadsheets/d/1e_Mirro_Leads_Database/edit",
+    googleSheetWebhookUrl: "https://script.google.com/macros/s/AKfycbw6TMJQdgvO1PHQ3Si63Lzv6H9L7UK-grhzWCvVYkzndneEMKRyLuMJIau1qqhIly_UjA/exec",
+    googleSheetId: ""
   },
   clientLeads: [
     {
@@ -151,7 +154,14 @@ function readDataStore() {
   try {
     if (fs.existsSync(DATA_FILE)) {
       const content = fs.readFileSync(DATA_FILE, "utf-8");
-      return JSON.parse(content);
+      const parsed = JSON.parse(content);
+      if (parsed && parsed.config && !parsed.config.googleSheetWebhookUrl) {
+        parsed.config.googleSheetWebhookUrl = defaultData.config.googleSheetWebhookUrl;
+        try {
+          fs.writeFileSync(DATA_FILE, JSON.stringify(parsed, null, 2), "utf-8");
+        } catch (e) {}
+      }
+      return parsed;
     }
   } catch (e) {
     console.error("Error reading data store, reinitializing", e);
@@ -173,6 +183,43 @@ function writeDataStore(data: any) {
 }
 
 async function startServer() {
+  // Helper to forward leads to Google Sheet Webhook
+  async function forwardLeadToGoogleSheet(lead: any, leadType: 'client' | 'pro', config: any) {
+    const webhookUrl = config?.googleSheetWebhookUrl || (config?.googleSheetUrl?.includes('script.google.com') ? config.googleSheetUrl : null);
+    if (!webhookUrl) return;
+
+    try {
+      const payload = leadType === 'client' ? {
+        leadType: 'client',
+        type: 'Client Lead',
+        name: lead.name || '',
+        email: lead.email || '',
+        phone: lead.phone || '',
+        neighborhood: lead.neighborhood || '',
+        services: Array.isArray(lead.services) ? lead.services.join(', ') : (lead.services || ''),
+        createdAt: lead.createdAt || new Date().toLocaleString(),
+      } : {
+        leadType: 'pro',
+        type: 'Salon Pro Partner',
+        name: lead.name || '',
+        businessName: lead.businessName || '',
+        serviceType: lead.serviceType || '',
+        email: lead.email || '',
+        phone: lead.phone || '',
+        neighborhood: lead.neighborhood || '',
+        createdAt: lead.createdAt || new Date().toLocaleString(),
+      };
+
+      await fetch(webhookUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+    } catch (err) {
+      console.warn(`[Google Sheets Auto-Sync] Failed to post ${leadType} lead:`, err);
+    }
+  }
+
   // 1. Get central app data
   app.get("/api/data", (req, res) => {
     const data = readDataStore();
@@ -239,6 +286,9 @@ async function startServer() {
     data.clientLeads = [lead, ...(data.clientLeads || [])];
     writeDataStore(data);
 
+    // Auto-forward lead to Google Sheet Webhook if configured
+    forwardLeadToGoogleSheet(lead, 'client', data.config);
+
     res.json({ success: true, clientLeads: data.clientLeads });
   });
 
@@ -253,7 +303,39 @@ async function startServer() {
     data.proLeads = [lead, ...(data.proLeads || [])];
     writeDataStore(data);
 
+    // Auto-forward lead to Google Sheet Webhook if configured
+    forwardLeadToGoogleSheet(lead, 'pro', data.config);
+
     res.json({ success: true, proLeads: data.proLeads });
+  });
+
+  // Sync All Leads to Google Sheet Webhook
+  app.post("/api/google-sheet/sync-all", async (req, res) => {
+    const data = readDataStore();
+    const webhookUrl = data.config?.googleSheetWebhookUrl || (data.config?.googleSheetUrl?.includes('script.google.com') ? data.config.googleSheetUrl : null);
+
+    if (!webhookUrl) {
+      return res.status(400).json({
+        success: false,
+        error: "No Google Sheet Webhook URL configured. Please paste your Google Apps Script Web App URL first."
+      });
+    }
+
+    try {
+      const clientLeads = data.clientLeads || [];
+      const proLeads = data.proLeads || [];
+
+      for (const lead of clientLeads) {
+        await forwardLeadToGoogleSheet(lead, 'client', data.config);
+      }
+      for (const lead of proLeads) {
+        await forwardLeadToGoogleSheet(lead, 'pro', data.config);
+      }
+
+      res.json({ success: true, count: clientLeads.length + proLeads.length });
+    } catch (err: any) {
+      res.status(500).json({ success: false, error: err.message || "Failed to sync leads to Google Sheet" });
+    }
   });
 
   // 6. Reset Leads

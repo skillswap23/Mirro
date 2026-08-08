@@ -49,6 +49,9 @@ export interface SiteConfig {
   calendlyBaseUrl: string;
   googleFormEmbedUrl: string;
   contactEmail: string;
+  googleSheetUrl?: string;
+  googleSheetId?: string;
+  googleSheetWebhookUrl?: string;
   policyNotes: {
     upfrontPayment: boolean;
     nonRefundable: boolean;

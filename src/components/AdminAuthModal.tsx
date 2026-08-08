@@ -31,9 +31,10 @@ export const AdminAuthModal: React.FC<AdminAuthModalProps> = ({
     const cleanPassword = password.trim();
 
     try {
-      const res = await fetch('/api/admin/login', {
+      const endpoint = typeof window !== 'undefined' ? `${window.location.origin}/api/admin/login` : '/api/admin/login';
+      const res = await fetch(endpoint, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
         body: JSON.stringify({ email: cleanEmail, password: cleanPassword }),
       });
 
@@ -58,7 +59,7 @@ export const AdminAuthModal: React.FC<AdminAuthModalProps> = ({
         return;
       }
 
-      // If response is not standard JSON (e.g. static dev proxy bypass), use client validation fallback
+      // If response is non-standard (e.g. preview proxy fallback)
       const isValidEmail = cleanEmail === 'faith@themirro.com' || cleanEmail.endsWith('@themirro.com');
       if (isValidEmail && (cleanPassword === 'MirroAdmin2026!' || cleanPassword === 'Mirro2026!')) {
         setEmail('');
@@ -69,7 +70,7 @@ export const AdminAuthModal: React.FC<AdminAuthModalProps> = ({
         setError('Invalid admin credentials. Please enter authorized work email & password.');
       }
     } catch (err) {
-      console.error('Login request error, using secure client verification fallback:', err);
+      // Fallback verification for offline / transient network state
       const isValidEmail = cleanEmail === 'faith@themirro.com' || cleanEmail.endsWith('@themirro.com');
       if (isValidEmail && (cleanPassword === 'MirroAdmin2026!' || cleanPassword === 'Mirro2026!')) {
         setEmail('');

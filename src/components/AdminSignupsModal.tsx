@@ -1,6 +1,27 @@
-import React, { useState } from 'react';
-import { X, Users, Download, Copy, Check, Trash2, Phone, Mail, MapPin, Building2, UserCheck, Search, Filter } from 'lucide-react';
-import { ClientLead, ProLead } from '../types';
+import React, { useState, useEffect } from 'react';
+import {
+  X,
+  Users,
+  Download,
+  Copy,
+  Check,
+  Trash2,
+  Phone,
+  Mail,
+  MapPin,
+  Building2,
+  UserCheck,
+  Search,
+  Filter,
+  FileSpreadsheet,
+  ExternalLink,
+  RefreshCw,
+  Link2,
+  Sparkles,
+  Database,
+} from 'lucide-react';
+import { ClientLead, ProLead, SiteConfig } from '../types';
+import { extractSpreadsheetId, getSpreadsheetUrl, syncLeadsToSheet } from '../lib/googleSheets';
 
 interface AdminSignupsModalProps {
   isOpen: boolean;
@@ -8,6 +29,8 @@ interface AdminSignupsModalProps {
   clientLeads: ClientLead[];
   proLeads: ProLead[];
   onClearLeads: () => void;
+  config?: SiteConfig;
+  onSaveConfig?: (config: SiteConfig) => void;
 }
 
 export const AdminSignupsModal: React.FC<AdminSignupsModalProps> = ({
@@ -16,10 +39,32 @@ export const AdminSignupsModal: React.FC<AdminSignupsModalProps> = ({
   clientLeads,
   proLeads,
   onClearLeads,
+  config,
+  onSaveConfig,
 }) => {
   const [activeTab, setActiveTab] = useState<'all' | 'clients' | 'pros'>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [copiedText, setCopiedText] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [syncStatus, setSyncStatus] = useState<string | null>(null);
+  const DEFAULT_WEBHOOK = 'https://script.google.com/macros/s/AKfycbw6TMJQdgvO1PHQ3Si63Lzv6H9L7UK-grhzWCvVYkzndneEMKRyLuMJIau1qqhIly_UjA/exec';
+  const [showSheetLinkInput, setShowSheetLinkInput] = useState(false);
+  const [sheetUrlInput, setSheetUrlInput] = useState(config?.googleSheetUrl || (config?.googleSheetId ? getSpreadsheetUrl(config.googleSheetId) : ''));
+  const [webhookUrlInput, setWebhookUrlInput] = useState(config?.googleSheetWebhookUrl || DEFAULT_WEBHOOK);
+  const [showScriptGuide, setShowScriptGuide] = useState(false);
+  const [copiedScript, setCopiedScript] = useState(false);
+  const [copiedSheetTable, setCopiedSheetTable] = useState(false);
+
+  useEffect(() => {
+    if (config?.googleSheetWebhookUrl) {
+      setWebhookUrlInput(config.googleSheetWebhookUrl);
+    } else {
+      setWebhookUrlInput(DEFAULT_WEBHOOK);
+    }
+    if (config?.googleSheetUrl) {
+      setSheetUrlInput(config.googleSheetUrl);
+    }
+  }, [config]);
 
   if (!isOpen) return null;
 
@@ -52,37 +97,67 @@ export const AdminSignupsModal: React.FC<AdminSignupsModalProps> = ({
 
   const totalCount = clientLeads.length + proLeads.length;
 
+  const copyForGoogleSheets = () => {
+    const headers = ['Type', 'Full Name', 'Business / Services', 'Email', 'Phone', 'Neighborhood / Location', 'Date Joined'];
+    const rows = [headers.join('\t')];
+
+    filteredClients.forEach((c) => {
+      const srvs = Array.isArray(c.services) ? c.services.join(', ') : (c.services || '');
+      rows.push(['Client Lead', c.name, srvs, c.email, c.phone, c.neighborhood, c.createdAt].map(v => (v || '').toString().replace(/\t/g, ' ')).join('\t'));
+    });
+
+    filteredPros.forEach((p) => {
+      const biz = p.businessName ? `${p.businessName} (${p.serviceType})` : p.serviceType;
+      rows.push(['Salon Pro Partner', p.name, biz, p.email, p.phone, p.neighborhood, p.createdAt].map(v => (v || '').toString().replace(/\t/g, ' ')).join('\t'));
+    });
+
+    navigator.clipboard.writeText(rows.join('\n'));
+    setCopiedSheetTable(true);
+    setSyncStatus('📋 Copied table to clipboard! Open Google Sheets, click Cell A1, and press Paste (Ctrl+V or Cmd+V).');
+    setTimeout(() => {
+      setCopiedSheetTable(false);
+      setSyncStatus(null);
+    }, 6000);
+  };
+
   const exportCSV = () => {
-    let csvContent = 'data:text/csv;charset=utf-8,';
+    const rows: string[][] = [];
 
     if (activeTab === 'pros') {
-      csvContent += 'Type,Name,Business,Service,Email,Phone,Location,Date\n';
+      rows.push(['Type', 'Name', 'Business', 'Service', 'Email', 'Phone', 'Location', 'Date']);
       filteredPros.forEach((p) => {
-        csvContent += `"Beauty Pro","${p.name}","${p.businessName || ''}","${p.serviceType}","${p.email}","${p.phone}","${p.neighborhood}","${p.createdAt}"\n`;
+        rows.push(['Beauty Pro', p.name, p.businessName || '', p.serviceType, p.email, p.phone, p.neighborhood, p.createdAt]);
       });
     } else if (activeTab === 'clients') {
-      csvContent += 'Type,Name,Email,Phone,Location,Requested Services,Date\n';
+      rows.push(['Type', 'Name', 'Email', 'Phone', 'Location', 'Requested Services', 'Date']);
       filteredClients.forEach((c) => {
-        const srvs = c.services.join(';');
-        csvContent += `"Client Lead","${c.name}","${c.email}","${c.phone}","${c.neighborhood}","${srvs}","${c.createdAt}"\n`;
+        const srvs = Array.isArray(c.services) ? c.services.join(', ') : (c.services || '');
+        rows.push(['Client Lead', c.name, c.email, c.phone, c.neighborhood, srvs, c.createdAt]);
       });
     } else {
-      csvContent += 'Type,Name,Business/Services,Email,Phone,Location,Date\n';
+      rows.push(['Type', 'Name', 'Business/Services', 'Email', 'Phone', 'Location', 'Date']);
       filteredClients.forEach((c) => {
-        csvContent += `"Client","${c.name}","${c.services.join(';')}","${c.email}","${c.phone}","${c.neighborhood}","${c.createdAt}"\n`;
+        const srvs = Array.isArray(c.services) ? c.services.join(', ') : (c.services || '');
+        rows.push(['Client Lead', c.name, srvs, c.email, c.phone, c.neighborhood, c.createdAt]);
       });
       filteredPros.forEach((p) => {
-        csvContent += `"Pro Partner","${p.name}","${p.businessName || p.serviceType}","${p.email}","${p.phone}","${p.neighborhood}","${p.createdAt}"\n`;
+        rows.push(['Pro Partner', p.name, p.businessName || p.serviceType, p.email, p.phone, p.neighborhood, p.createdAt]);
       });
     }
 
-    const encodedUri = encodeURI(csvContent);
+    const csvString = rows
+      .map(row => row.map(cell => `"${(cell || '').toString().replace(/"/g, '""')}"`).join(','))
+      .join('\n');
+
+    const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
-    link.setAttribute('href', encodedUri);
-    link.setAttribute('download', `mirro_registered_contacts_${activeTab}_${new Date().toISOString().slice(0, 10)}.csv`);
+    link.href = url;
+    link.setAttribute('download', `mirro_leads_${activeTab}_${new Date().toISOString().slice(0, 10)}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   };
 
   const copyContactList = () => {
@@ -101,6 +176,103 @@ export const AdminSignupsModal: React.FC<AdminSignupsModalProps> = ({
     setCopiedText(true);
     setTimeout(() => setCopiedText(false), 2000);
   };
+
+  const APPS_SCRIPT_CODE = `function doPost(e) {
+  try {
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var data = JSON.parse(e.postData.contents);
+    var sheetName = data.leadType === 'pro' ? 'Salon Pro Partners' : 'Client Leads';
+    var sheet = ss.getSheetByName(sheetName);
+    if (!sheet) {
+      sheet = ss.insertSheet(sheetName);
+      if (data.leadType === 'pro') {
+        sheet.appendRow(['Type', 'Full Name', 'Business Name', 'Specialty', 'Email', 'Phone', 'Location', 'Date']);
+      } else {
+        sheet.appendRow(['Type', 'Full Name', 'Email', 'Phone', 'Location', 'Requested Services', 'Date']);
+      }
+    }
+    if (sheet.getLastRow() === 0) {
+      if (data.leadType === 'pro') {
+        sheet.appendRow(['Type', 'Full Name', 'Business Name', 'Specialty', 'Email', 'Phone', 'Location', 'Date']);
+      } else {
+        sheet.appendRow(['Type', 'Full Name', 'Email', 'Phone', 'Location', 'Requested Services', 'Date']);
+      }
+    }
+    if (data.leadType === 'pro') {
+      sheet.appendRow(['Salon Pro Partner', data.name, data.businessName || '', data.serviceType || '', data.email, data.phone, data.neighborhood, data.createdAt]);
+    } else {
+      sheet.appendRow(['Client Lead', data.name, data.email, data.phone, data.neighborhood, data.services || '', data.createdAt]);
+    }
+    return ContentService.createTextOutput(JSON.stringify({status: "success"})).setMimeType(ContentService.MimeType.JSON);
+  } catch(err) {
+    return ContentService.createTextOutput(JSON.stringify({status: "error", error: err.message})).setMimeType(ContentService.MimeType.JSON);
+  }
+}`;
+
+  const copyAppsScript = () => {
+    navigator.clipboard.writeText(APPS_SCRIPT_CODE);
+    setCopiedScript(true);
+    setTimeout(() => setCopiedScript(false), 2500);
+  };
+
+  const handleSaveSheetLink = () => {
+    let finalSheetUrl = sheetUrlInput.trim();
+    let finalWebhookUrl = webhookUrlInput.trim();
+
+    // Auto-swap if user put script URL in sheet box or vice versa
+    if (finalSheetUrl.includes('script.google.com')) {
+      if (!finalWebhookUrl) finalWebhookUrl = finalSheetUrl;
+      finalSheetUrl = '';
+    }
+    if (finalWebhookUrl.includes('docs.google.com')) {
+      if (!finalSheetUrl) finalSheetUrl = finalWebhookUrl;
+      finalWebhookUrl = '';
+    }
+
+    const extractedId = extractSpreadsheetId(finalSheetUrl);
+    const validSheetUrl = finalSheetUrl ? (getSpreadsheetUrl(finalSheetUrl) || finalSheetUrl) : (config?.googleSheetUrl || '');
+
+    if (config && onSaveConfig) {
+      onSaveConfig({
+        ...config,
+        googleSheetUrl: validSheetUrl || undefined,
+        googleSheetId: extractedId || config?.googleSheetId,
+        googleSheetWebhookUrl: finalWebhookUrl || undefined,
+      });
+    }
+    setShowSheetLinkInput(false);
+    setSyncStatus('Google Sheet & Webhook URLs updated successfully!');
+    setTimeout(() => setSyncStatus(null), 3000);
+  };
+
+  const handleSyncAllToSheet = async () => {
+    setIsSyncing(true);
+    setSyncStatus(null);
+    try {
+      const endpoint = typeof window !== 'undefined' ? `${window.location.origin}/api/google-sheet/sync-all` : '/api/google-sheet/sync-all';
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setSyncStatus(`🎉 Successfully pushed ${data.count} leads directly to your Google Sheet!`);
+      } else {
+        setSyncStatus(data.error || 'Please paste your Google Apps Script Web App URL below first.');
+      }
+    } catch (e: any) {
+      setSyncStatus('Sync error. Please paste your Google Apps Script Web App URL below.');
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
+  const rawUrl = config?.googleSheetUrl;
+  const currentSheetUrl = (rawUrl && rawUrl.includes('docs.google.com'))
+    ? rawUrl
+    : (config?.googleSheetId ? getSpreadsheetUrl(config.googleSheetId) : null);
+
+  const currentWebhookUrl = config?.googleSheetWebhookUrl || (rawUrl && rawUrl.includes('script.google.com') ? rawUrl : DEFAULT_WEBHOOK);
 
   return (
     <div className="fixed inset-0 z-50 bg-stone-900/40 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
@@ -131,6 +303,169 @@ export const AdminSignupsModal: React.FC<AdminSignupsModalProps> = ({
           >
             <X className="w-5 h-5" />
           </button>
+        </div>
+
+        {/* Google Sheets Live Database Banner */}
+        <div className="mb-4 bg-emerald-950 text-emerald-50 rounded-2xl p-4 border border-emerald-800/80 shadow-md shrink-0">
+          <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-emerald-600/30 border border-emerald-500/40 text-emerald-300 flex items-center justify-center shrink-0">
+                <FileSpreadsheet className="w-5 h-5 text-emerald-400" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="font-medium text-sm text-white flex items-center gap-1.5">
+                    <Database className="w-3.5 h-3.5 text-emerald-400" /> Google Sheets Lead Sync
+                  </span>
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-[10px] font-medium font-mono">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" /> Live Ready
+                  </span>
+                </div>
+                <p className="text-xs text-emerald-200/80 font-light mt-0.5">
+                  Choose the simplest way for you: 1-Click Copy to Paste into Google Sheets, Direct CSV Download, or Auto Webhook Sync.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2 w-full lg:w-auto shrink-0">
+              {/* Option A: Instant Copy for Google Sheets */}
+              <button
+                onClick={copyForGoogleSheets}
+                className="px-3.5 py-1.5 rounded-xl bg-emerald-400 text-stone-950 font-semibold text-xs hover:bg-emerald-300 transition-all flex items-center gap-1.5 shadow-sm"
+              >
+                {copiedSheetTable ? <Check className="w-3.5 h-3.5 text-stone-950" /> : <Copy className="w-3.5 h-3.5" />}
+                {copiedSheetTable ? 'Copied Table!' : 'Copy for Google Sheets'}
+              </button>
+
+              {/* Option B: Download CSV */}
+              <button
+                onClick={exportCSV}
+                className="px-3 py-1.5 rounded-xl bg-emerald-800/80 border border-emerald-600/60 text-emerald-100 hover:text-white hover:bg-emerald-700 transition-all text-xs font-medium flex items-center gap-1"
+              >
+                <Download className="w-3.5 h-3.5" /> Download CSV
+              </button>
+
+              {/* Option C: Open linked Google Sheet */}
+              <button
+                onClick={() => {
+                  if (currentSheetUrl) {
+                    window.open(currentSheetUrl, '_blank');
+                  } else {
+                    setShowSheetLinkInput(true);
+                  }
+                }}
+                className="px-3 py-1.5 rounded-xl bg-emerald-900/80 border border-emerald-700/60 text-emerald-200 hover:text-white hover:bg-emerald-800 transition-all text-xs font-medium flex items-center gap-1"
+              >
+                <ExternalLink className="w-3.5 h-3.5" /> {currentSheetUrl ? 'Open Google Sheet' : 'Link Google Sheet URL'}
+              </button>
+
+              {/* Option D: Webhook auto-sync setup */}
+              <button
+                onClick={() => setShowScriptGuide(!showScriptGuide)}
+                className="px-2.5 py-1.5 rounded-xl bg-emerald-900/80 border border-emerald-700/60 text-emerald-300 hover:text-white hover:bg-emerald-800 transition-all text-xs font-medium flex items-center gap-1"
+              >
+                <Sparkles className="w-3.5 h-3.5 text-amber-300" /> Auto-Sync Webhook Setup
+              </button>
+            </div>
+          </div>
+
+          {/* Sync status alert */}
+          {syncStatus && (
+            <div className="mt-3 text-xs bg-emerald-900/90 border border-emerald-600/50 text-emerald-100 px-3.5 py-2 rounded-xl flex items-center gap-2 shadow-sm">
+              <Check className="w-4 h-4 text-emerald-400 shrink-0" />
+              <span>{syncStatus}</span>
+            </div>
+          )}
+
+          {/* Sheet Link & Webhook Configuration Inputs */}
+          {showSheetLinkInput && (
+            <div className="mt-3 pt-3 border-t border-emerald-800/60 space-y-3 bg-emerald-900/30 p-3.5 rounded-xl border border-emerald-700/40">
+              <div className="space-y-1">
+                <label className="block text-xs text-emerald-100 font-semibold flex items-center justify-between">
+                  <span>Google Sheet URL (docs.google.com):</span>
+                  <span className="text-[10px] text-emerald-300 font-normal">Opens your sheet in 1-click</span>
+                </label>
+                <input
+                  type="text"
+                  value={sheetUrlInput}
+                  onChange={(e) => setSheetUrlInput(e.target.value)}
+                  placeholder="Paste https://docs.google.com/spreadsheets/d/your-sheet-id/edit"
+                  className="w-full bg-emerald-950/70 border border-emerald-700 text-white placeholder-emerald-400/50 text-xs rounded-xl px-3 py-2 focus:outline-none focus:border-emerald-400 font-mono"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="block text-xs text-emerald-100 font-semibold flex items-center justify-between">
+                  <span>Optional: Google Apps Script Webhook URL (script.google.com):</span>
+                  <span className="text-[10px] text-amber-300 font-medium">For Auto Webhook Sync</span>
+                </label>
+                <input
+                  type="text"
+                  value={webhookUrlInput}
+                  onChange={(e) => setWebhookUrlInput(e.target.value)}
+                  placeholder="Paste https://script.google.com/macros/s/.../exec"
+                  className="w-full bg-emerald-950/70 border border-emerald-700 text-white placeholder-emerald-400/50 text-xs rounded-xl px-3 py-2 focus:outline-none focus:border-emerald-400 font-mono"
+                />
+              </div>
+
+              <div className="flex justify-end gap-2 pt-1">
+                <button
+                  onClick={() => setShowSheetLinkInput(false)}
+                  className="px-3 py-1.5 text-xs text-emerald-200 hover:text-white"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSaveSheetLink}
+                  className="px-4 py-1.5 bg-emerald-400 text-stone-950 font-semibold text-xs rounded-xl hover:bg-emerald-300 transition-all shadow-md"
+                >
+                  Save Link
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Apps Script Guide & 1-Click Code */}
+          {showScriptGuide && (
+            <div className="mt-3 pt-3 border-t border-emerald-800/60 space-y-3 bg-emerald-900/40 p-3.5 rounded-xl border border-emerald-700/50">
+              <div className="flex items-center justify-between">
+                <h5 className="text-xs font-semibold text-white flex items-center gap-1.5">
+                  <Sparkles className="w-3.5 h-3.5 text-amber-300" /> How to enable Automatic Webhook Sync
+                </h5>
+                <button
+                  onClick={copyAppsScript}
+                  className="px-2.5 py-1 rounded-lg bg-emerald-400 text-stone-950 text-[11px] font-medium hover:bg-emerald-300 transition-all flex items-center gap-1"
+                >
+                  {copiedScript ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+                  {copiedScript ? 'Copied Script!' : 'Copy 1-Click Apps Script'}
+                </button>
+              </div>
+
+              <ol className="text-[11px] text-emerald-100/90 space-y-2 list-decimal list-inside font-light leading-relaxed">
+                <li>In Google Sheets, click <strong className="text-white font-normal">Extensions &gt; Apps Script</strong>.</li>
+                <li>Delete any default code, click <strong className="text-white font-normal">Copy 1-Click Apps Script</strong> above, and paste it in.</li>
+                <li>Click <strong className="text-white font-normal">Deploy &gt; New deployment</strong>, select type <strong className="text-white font-normal">Web app</strong>.</li>
+                <li>Set <strong className="text-white font-normal">Who has access</strong> to <strong className="text-emerald-300 font-medium">Anyone</strong>, then click <strong className="text-white font-normal">Deploy</strong>.</li>
+                <li className="bg-emerald-950/80 p-2 rounded-lg border border-emerald-700/60 text-amber-200">
+                  <strong className="text-white font-semibold block mb-0.5">🔑 Passing the "Authorize Access" Google Screen:</strong>
+                  When Google asks <em className="text-white font-normal">"The Web App requires you to authorize access"</em>: Click <strong className="text-white font-medium">Authorize access</strong> &gt; Choose your Google account &gt; Click <strong className="text-white font-medium">Advanced</strong> &gt; Click <strong className="text-white font-medium">Go to Untitled project (unsafe)</strong> &gt; Click <strong className="text-white font-medium">Allow</strong>.
+                </li>
+                <li>Copy the resulting <strong className="text-white font-normal">Web app URL</strong> (starts with <em className="font-mono">https://script.google.com/...</em>) and paste it into <strong className="text-white font-normal">Link Google Sheet URL</strong> above!</li>
+              </ol>
+
+              <div className="pt-2 border-t border-emerald-800/60 flex justify-between items-center">
+                <span className="text-[11px] text-emerald-300/80">Want to manually push all leads into your Webhook script right now?</span>
+                <button
+                  onClick={handleSyncAllToSheet}
+                  disabled={isSyncing}
+                  className="px-3 py-1 rounded-lg bg-emerald-400 text-stone-950 font-semibold text-[11px] hover:bg-emerald-300 transition-all flex items-center gap-1 shadow-sm"
+                >
+                  <RefreshCw className={`w-3 h-3 ${isSyncing ? 'animate-spin' : ''}`} />
+                  {isSyncing ? 'Pushing...' : 'Push All Leads Now'}
+                </button>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Filter Controls & Search */}

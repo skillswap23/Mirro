@@ -1,6 +1,20 @@
 import React, { useState } from 'react';
-import { X, Users, SlidersHorizontal, Lock, ShieldCheck, ChevronRight, KeyRound, Check, CalendarPlus } from 'lucide-react';
+import {
+  X,
+  Users,
+  SlidersHorizontal,
+  Lock,
+  ShieldCheck,
+  ChevronRight,
+  KeyRound,
+  Check,
+  CalendarPlus,
+  FileSpreadsheet,
+  ExternalLink,
+  Database,
+} from 'lucide-react';
 import { ClientLead, ProLead, SiteConfig } from '../types';
+import { getSpreadsheetUrl } from '../lib/googleSheets';
 
 interface AdminHubModalProps {
   isOpen: boolean;
@@ -35,9 +49,10 @@ export const AdminHubModal: React.FC<AdminHubModalProps> = ({
     e.preventDefault();
     if (newPassword.trim().length >= 4) {
       try {
-        const res = await fetch('/api/admin/change-password', {
+        const endpoint = typeof window !== 'undefined' ? `${window.location.origin}/api/admin/change-password` : '/api/admin/change-password';
+        const res = await fetch(endpoint, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
           body: JSON.stringify({ newPassword: newPassword.trim() }),
         });
         const data = await res.json();
@@ -52,7 +67,6 @@ export const AdminHubModal: React.FC<AdminHubModalProps> = ({
           alert(data.error || 'Failed to update password on server');
         }
       } catch (err) {
-        console.error('Failed to update password', err);
         alert('Server error updating password');
       }
     }
@@ -133,6 +147,35 @@ export const AdminHubModal: React.FC<AdminHubModalProps> = ({
               </div>
             </div>
             <ChevronRight className="w-5 h-5 text-stone-400 group-hover:translate-x-0.5 transition-transform shrink-0" />
+          </button>
+
+          {/* Live Google Sheets Database Card */}
+          <button
+            onClick={() => {
+              onClose();
+              onOpenSignupsDashboard();
+            }}
+            className="w-full text-left p-4 rounded-2xl border border-emerald-800/30 bg-emerald-950 text-emerald-50 hover:bg-emerald-900 transition-all group flex items-center justify-between shadow-sm"
+          >
+            <div className="flex items-start gap-3.5">
+              <div className="w-10 h-10 rounded-xl bg-emerald-800/60 border border-emerald-600/50 text-emerald-300 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                <FileSpreadsheet className="w-5 h-5 text-emerald-400" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h4 className="font-medium text-sm text-white flex items-center gap-1">
+                    <Database className="w-3.5 h-3.5 text-emerald-400" /> Google Sheets Live Database
+                  </h4>
+                  <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-[10px] font-mono font-medium">
+                    Live
+                  </span>
+                </div>
+                <p className="text-xs text-emerald-200/80 font-light mt-0.5">
+                  Open, export, or link your live Google Sheets database for all client and salon pro leads.
+                </p>
+              </div>
+            </div>
+            <ExternalLink className="w-4 h-4 text-emerald-400 group-hover:translate-x-0.5 transition-transform shrink-0" />
           </button>
 
           {/* No-Code Embeds & Config Card */}
