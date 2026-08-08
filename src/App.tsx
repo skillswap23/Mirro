@@ -62,8 +62,8 @@ export default function App() {
 
   useEffect(() => {
     fetchCentralData();
-    // Refresh central data every 5 seconds so signups appear across sessions
-    const interval = setInterval(fetchCentralData, 5000);
+    // Fast polling every 2 seconds for real-time live synchronization across browsers
+    const interval = setInterval(fetchCentralData, 2000);
     return () => clearInterval(interval);
   }, []);
 
@@ -93,11 +93,6 @@ export default function App() {
     setIsAdminAuthenticated(true);
     setIsAdminAuthOpen(false);
     setIsAdminHubOpen(true);
-    try {
-      localStorage.setItem('themirro_admin_session', 'active');
-    } catch (e) {
-      console.error(e);
-    }
   };
 
   const handleLockAdmin = () => {

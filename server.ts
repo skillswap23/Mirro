@@ -8,6 +8,14 @@ const PORT = 3000;
 
 app.use(express.json());
 
+// Global No-Cache Middleware for API endpoints (prevents Safari & browser caching)
+app.use("/api", (req, res, next) => {
+  res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+  res.setHeader("Pragma", "no-cache");
+  res.setHeader("Expires", "0");
+  next();
+});
+
 // Path to data store file
 const DATA_FILE = path.join(process.cwd(), "data_store.json");
 
@@ -202,10 +210,6 @@ function readDataStore() {
 
       if (!parsed.deals || !Array.isArray(parsed.deals) || parsed.deals.length === 0) {
         parsed.deals = defaultData.deals;
-        modified = true;
-      } else {
-        // Ensure all deals match the full Deal schema
-        parsed.deals = parsed.deals.map(normalizeDeal);
         modified = true;
       }
 

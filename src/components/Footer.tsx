@@ -123,7 +123,7 @@ export const Footer: React.FC<FooterProps> = ({
                 className="text-[11px] text-stone-600 hover:text-stone-900 flex items-center gap-1.5 font-light transition-colors py-1 px-2.5 rounded-lg border border-stone-200/60 bg-white/60 hover:bg-white"
               >
                 <Lock className="w-3 h-3 text-stone-500" />
-                <span>{isAdminAuthenticated ? 'Owner Admin Portal (Unlocked)' : 'Owner Admin Portal'}</span>
+                <span>{isAdminAuthenticated ? 'Owner Admin Portal (Unlocked)' : 'Owner Admin Portal (Locked)'}</span>
               </button>
             </div>
           </div>
