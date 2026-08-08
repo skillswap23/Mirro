@@ -35,9 +35,11 @@ export default function App() {
   // Fetch central data from Express backend server
   const fetchCentralData = async () => {
     try {
-      const endpoint = typeof window !== 'undefined' ? `${window.location.origin}/api/data` : '/api/data';
+      const baseUrl = typeof window !== 'undefined' ? `${window.location.origin}/api/data` : '/api/data';
+      const endpoint = `${baseUrl}?_t=${Date.now()}`;
       const res = await fetch(endpoint, {
         headers: { Accept: 'application/json' },
+        cache: 'no-store',
       });
       if (res.ok) {
         const contentType = res.headers.get('content-type');

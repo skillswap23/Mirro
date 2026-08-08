@@ -222,6 +222,9 @@ async function startServer() {
 
   // 1. Get central app data
   app.get("/api/data", (req, res) => {
+    res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+    res.setHeader("Pragma", "no-cache");
+    res.setHeader("Expires", "0");
     const data = readDataStore();
     res.json({
       config: data.config,
