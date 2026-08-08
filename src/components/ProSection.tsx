@@ -36,9 +36,10 @@ export const ProSection: React.FC<ProSectionProps> = ({ onProLeadAdded }) => {
     };
 
     if (onProLeadAdded) {
-      onProLeadAdded(newLead);
+      await onProLeadAdded(newLead);
     }
 
+    // Also send submission to Formspree endpoint
     const leadData = {
       _subject: `New Mirro Partner Professional Application: ${name}`,
       formType: 'Stylist / Salon Partner Application (Pro Section)',
@@ -60,14 +61,12 @@ export const ProSection: React.FC<ProSectionProps> = ({ onProLeadAdded }) => {
         },
         body: JSON.stringify(leadData),
       });
-
-      setSubmitted(true);
     } catch (err) {
-      console.error('Formspree submit error, lead saved to internal database:', err);
-      setSubmitted(true);
-    } finally {
-      setIsSubmitting(false);
+      console.error('Formspree submit notice:', err);
     }
+
+    setSubmitted(true);
+    setIsSubmitting(false);
   };
 
   return (
@@ -293,7 +292,7 @@ export const ProSection: React.FC<ProSectionProps> = ({ onProLeadAdded }) => {
                     }`}
                   >
                     <Send className="w-4 h-4" />
-                    {isSubmitting ? 'Sending to Formspree...' : 'Join The Mirro Pro Network'}
+                    {isSubmitting ? 'Submitting Application...' : 'Join The Mirro Pro Network'}
                   </button>
                   <p className="text-[11px] text-stone-500 text-center mt-3 font-light leading-relaxed max-w-lg mx-auto">
                     By joining, you agree we can contact you about The Mirro's salon partner onboarding. See our{' '}

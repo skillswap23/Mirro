@@ -49,7 +49,7 @@ export const ConfigModal: React.FC<ConfigModalProps> = ({
               <h3 className="font-serif text-lg font-medium text-stone-900">
                 No-Code Embed Setup
               </h3>
-              <p className="text-xs text-stone-500 font-light">Configure Airtable & Calendly URLs</p>
+              <p className="text-xs text-stone-500 font-light">Configure Airtable & Booking Page URLs</p>
             </div>
           </div>
           <button
@@ -64,7 +64,7 @@ export const ConfigModal: React.FC<ConfigModalProps> = ({
         <div className="bg-[#FAF8F5] p-3.5 rounded-2xl border border-stone-200/80 mb-5 text-xs text-stone-600 font-light leading-relaxed flex items-start gap-2.5">
           <Info className="w-4 h-4 text-stone-700 shrink-0 mt-0.5" />
           <div>
-            Paste your real no-code tool URLs below to connect your real Airtable live views and Calendly booking redirects.
+            Paste your real no-code tool URLs below to connect your real Airtable live views and booking page redirects.
           </div>
         </div>
 
@@ -100,21 +100,21 @@ export const ConfigModal: React.FC<ConfigModalProps> = ({
             />
           </div>
 
-          {/* Calendly Base URL */}
+          {/* Booking Page Base URL */}
           <div>
             <label className="block text-xs font-medium text-stone-700 mb-1 flex items-center gap-1">
               <Link className="w-3.5 h-3.5 text-stone-600" />
-              Calendly Booking Base URL
+              Booking Page Base URL
             </label>
             <input
               type="url"
               value={formData.calendlyBaseUrl}
               onChange={(e) => handleChange('calendlyBaseUrl', e.target.value)}
-              placeholder="https://calendly.com/your-salon-handle"
+              placeholder="https://booking.your-salon.com/handle"
               className="w-full bg-[#FAF8F5] text-xs text-stone-900 placeholder-stone-400 px-3.5 py-2.5 rounded-xl border border-stone-200 focus:outline-none focus:border-stone-400 font-mono"
             />
             <p className="text-[11px] text-stone-500 mt-1 font-light">
-              Tip: Configure Calendly to forward to your matching Stripe Payment Link upon slot selection.
+              Tip: Configure your booking page to forward to your matching Stripe Payment Link upon slot selection.
             </p>
           </div>
 

@@ -81,10 +81,11 @@ export const JoinCommunitySection: React.FC<JoinCommunitySectionProps> = ({
     };
 
     if (onClientLeadAdded) {
-      onClientLeadAdded(newClientLead);
+      await onClientLeadAdded(newClientLead);
     }
 
-    const leadData = {
+    // Also send submission to Formspree endpoint
+    const clientLeadData = {
       _subject: `New Mirro Client Alert Subscriber: ${clientName}`,
       formType: 'Client SMS Alert Signup (Community Section)',
       name: clientName,
@@ -103,18 +104,15 @@ export const JoinCommunitySection: React.FC<JoinCommunitySectionProps> = ({
           'Accept': 'application/json',
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(leadData),
+        body: JSON.stringify(clientLeadData),
       });
-
-      setClientSubmitted(true);
-      setLastClientLead(newClientLead);
     } catch (err) {
-      console.error('Formspree submit error, lead saved to internal database:', err);
-      setClientSubmitted(true);
-      setLastClientLead(newClientLead);
-    } finally {
-      setIsClientSubmitting(false);
+      console.error('Formspree submit notice:', err);
     }
+
+    setClientSubmitted(true);
+    setLastClientLead(newClientLead);
+    setIsClientSubmitting(false);
   };
 
   const handleProSubmit = async (e: React.FormEvent) => {
@@ -136,10 +134,11 @@ export const JoinCommunitySection: React.FC<JoinCommunitySectionProps> = ({
     };
 
     if (onProLeadAdded) {
-      onProLeadAdded(newProLead);
+      await onProLeadAdded(newProLead);
     }
 
-    const leadData = {
+    // Also send submission to Formspree endpoint
+    const proLeadData = {
       _subject: `New Mirro Partner Professional Application: ${proName}`,
       formType: 'Stylist / Salon Partner Application',
       name: proName,
@@ -159,16 +158,14 @@ export const JoinCommunitySection: React.FC<JoinCommunitySectionProps> = ({
           'Accept': 'application/json',
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(leadData),
+        body: JSON.stringify(proLeadData),
       });
-
-      setProSubmitted(true);
     } catch (err) {
-      console.error('Formspree submit error, lead saved to internal database:', err);
-      setProSubmitted(true);
-    } finally {
-      setIsProSubmitting(false);
+      console.error('Formspree submit notice:', err);
     }
+
+    setProSubmitted(true);
+    setIsProSubmitting(false);
   };
 
   return (
@@ -424,7 +421,7 @@ export const JoinCommunitySection: React.FC<JoinCommunitySectionProps> = ({
                       }`}
                     >
                       <Send className="w-4 h-4" />
-                      {isClientSubmitting ? 'Sending to Formspree...' : 'Subscribe for Free SMS Alerts'}
+                      {isClientSubmitting ? 'Saving Lead...' : 'Subscribe for Free SMS Alerts'}
                     </button>
                     <p className="text-[11px] text-stone-500 text-center mt-3 font-light leading-relaxed">
                       By joining, you agree we can email/SMS you about launch & deal drops. Unsubscribe anytime via{' '}
@@ -651,7 +648,7 @@ export const JoinCommunitySection: React.FC<JoinCommunitySectionProps> = ({
                       }`}
                     >
                       <Send className="w-4 h-4" />
-                      {isProSubmitting ? 'Sending to Formspree...' : 'Apply as Partner Professional'}
+                      {isProSubmitting ? 'Submitting Application...' : 'Apply as Partner Professional'}
                     </button>
                     <p className="text-[11px] text-stone-500 text-center mt-3 font-light leading-relaxed">
                       By joining, you agree we can contact you regarding salon partner onboarding. Unsubscribe via{' '}

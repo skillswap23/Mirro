@@ -59,9 +59,10 @@ export const CustomerSignupForm: React.FC<CustomerSignupFormProps> = ({
 
     // Always save lead to internal database server
     if (onLeadAdded) {
-      onLeadAdded(newLead);
+      await onLeadAdded(newLead);
     }
 
+    // Also send submission to Formspree endpoint
     const leadData = {
       _subject: `New Mirro Client Alert Subscriber: ${name}`,
       formType: 'Client SMS Alert Signup',
@@ -83,17 +84,13 @@ export const CustomerSignupForm: React.FC<CustomerSignupFormProps> = ({
         },
         body: JSON.stringify(leadData),
       });
-
-      // Show success screen regardless of Formspree quota limit
-      setSubmitted(true);
-      setLastSubmittedLead(newLead);
     } catch (err) {
-      console.error('Formspree submit error, lead saved to internal database:', err);
-      setSubmitted(true);
-      setLastSubmittedLead(newLead);
-    } finally {
-      setIsSubmitting(false);
+      console.error('Formspree submit notice:', err);
     }
+
+    setSubmitted(true);
+    setLastSubmittedLead(newLead);
+    setIsSubmitting(false);
   };
 
   const resetForm = () => {
@@ -323,7 +320,7 @@ export const CustomerSignupForm: React.FC<CustomerSignupFormProps> = ({
                   }`}
                 >
                   <Send className="w-4 h-4" />
-                  {isSubmitting ? 'Sending to Formspree...' : 'Subscribe to Free SMS Deal Alerts'}
+                  {isSubmitting ? 'Saving Lead...' : 'Subscribe to Free SMS Deal Alerts'}
                 </button>
                 <p className="text-[11px] text-stone-500 text-center mt-3 font-light leading-relaxed max-w-lg mx-auto">
                   By joining, you agree we can email and SMS you about The Mirro's launch and flash deal alerts. Unsubscribe anytime by emailing{' '}

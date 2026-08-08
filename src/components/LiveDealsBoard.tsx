@@ -255,7 +255,7 @@ export const LiveDealsBoard: React.FC<LiveDealsBoardProps> = ({ deals, config })
           )}
         </div>
 
-        {/* Claim Deal Calendly Modal */}
+        {/* Claim Deal Modal */}
         {claimDealModal && (
           <div className="fixed inset-0 z-50 bg-stone-900/40 backdrop-blur-sm flex items-center justify-center p-4">
             <div className="bg-white border border-stone-200 rounded-2xl p-6 max-w-md w-full shadow-2xl animate-fadeIn text-stone-900">
@@ -305,7 +305,7 @@ export const LiveDealsBoard: React.FC<LiveDealsBoardProps> = ({ deals, config })
                   How Booking & Payment Flow Works:
                 </p>
                 <p className="font-light">
-                  Clicking below opens {claimDealModal.stylistName}'s Calendly booking page. After choosing your time slot, Calendly immediately forwards you to a matching <strong>Stripe Payment Link</strong> to complete your payment upfront.
+                  Clicking below opens {claimDealModal.stylistName}'s booking page. After choosing your time slot, you will be forwarded to a matching <strong>Stripe Payment Link</strong> to complete your payment upfront.
                 </p>
               </div>
 
@@ -327,7 +327,7 @@ export const LiveDealsBoard: React.FC<LiveDealsBoardProps> = ({ deals, config })
                   onClick={confirmRedirectToCalendly}
                   className="px-5 py-2.5 rounded-full text-xs font-medium bg-stone-900 text-white shadow-sm hover:bg-stone-800 flex items-center gap-1.5"
                 >
-                  Continue to Calendly
+                  Continue to Booking Page
                   <ExternalLink className="w-3.5 h-3.5" />
                 </button>
               </div>

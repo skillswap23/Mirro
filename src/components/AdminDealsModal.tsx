@@ -315,11 +315,11 @@ export const AdminDealsModal: React.FC<AdminDealsModalProps> = ({
 
                 <div>
                   <label className="block text-xs font-medium text-stone-700 mb-1">
-                    Booking Link / Calendly URL <span className="text-stone-400 font-normal">(Optional)</span>
+                    Booking Link URL <span className="text-stone-400 font-normal">(Optional)</span>
                   </label>
                   <input
                     type="url"
-                    placeholder="https://calendly.com/your-salon/appointment"
+                    placeholder="https://your-booking-link.com/appointment"
                     value={calendlyUrl}
                     onChange={(e) => setCalendlyUrl(e.target.value)}
                     className="w-full bg-white text-xs text-stone-900 placeholder-stone-400 px-3 py-2.5 rounded-xl border border-stone-200 focus:outline-none focus:border-stone-400 font-mono"

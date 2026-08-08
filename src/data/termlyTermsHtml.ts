@@ -142,7 +142,7 @@ We reserve the right, but not the obligation, to: (1) monitor the Services for v
 
 <div style="line-height:1.5;" id="thirdparty"><span data-custom-class="heading_1"><h2>9. THIRD-PARTY WEBSITES AND CONTENT</h2></span></div>
 <div style="line-height:1.5;"><span data-custom-class="body_text">
-The Services may contain links to other websites ("Third-Party Websites") as well as articles, photographs, text, graphics, and other content belonging to or originating from third parties ("Third-Party Content"), including without limitation Stripe and Calendly. Such Third-Party Websites and Third-Party Content are not investigated, monitored, or checked for accuracy, appropriateness, or completeness by us, and we are not responsible for any Third-Party Websites accessed through the Services.
+The Services may contain links to other websites ("Third-Party Websites") as well as articles, photographs, text, graphics, and other content belonging to or originating from third parties ("Third-Party Content"), including without limitation Stripe and third-party booking providers. Such Third-Party Websites and Third-Party Content are not investigated, monitored, or checked for accuracy, appropriateness, or completeness by us, and we are not responsible for any Third-Party Websites accessed through the Services.
 </span></div><br><br>
 
 <div style="line-height:1.5;" id="term"><span data-custom-class="heading_1"><h2>10. TERM AND TERMINATION</h2></span></div>

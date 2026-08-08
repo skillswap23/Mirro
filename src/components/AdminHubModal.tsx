@@ -193,7 +193,7 @@ export const AdminHubModal: React.FC<AdminHubModalProps> = ({
               <div>
                 <h4 className="font-medium text-sm text-stone-900">No-Code Embeds & Links</h4>
                 <p className="text-xs text-stone-500 font-light mt-0.5">
-                  Update Airtable shared view URL, Calendly booking base URL, and discount rates.
+                  Update Airtable shared view URL, booking base URL, and discount rates.
                 </p>
               </div>
             </div>
