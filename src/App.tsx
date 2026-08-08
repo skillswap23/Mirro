@@ -23,13 +23,15 @@ export default function App() {
   const [clientLeads, setClientLeads] = useState<ClientLead[]>(INITIAL_CLIENT_LEADS);
   const [proLeads, setProLeads] = useState<ProLead[]>(INITIAL_PRO_LEADS);
 
-  // Admin Authentication State
+  // Admin Authentication State - default strictly to LOCKED for security
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState<boolean>(() => {
     try {
-      return localStorage.getItem('themirro_admin_session') === 'active';
+      localStorage.removeItem('themirro_admin_session');
+      sessionStorage.removeItem('themirro_admin_session');
     } catch {
-      return false;
+      // ignore
     }
+    return false;
   });
 
   // Fetch central data from Express backend server

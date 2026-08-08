@@ -87,80 +87,134 @@ const defaultData = {
   deals: [
     {
       id: "deal-1",
+      stylistName: "Elena Rostova",
+      stylistAvatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=200",
       salonName: "Glow Hair Studio",
-      neighborhood: "Yorkville",
-      address: "128 Yorkville Ave, Toronto",
-      serviceCategory: "hair",
-      serviceName: "Full Balayage & Blowout",
+      neighborhood: "Yorkville, Toronto",
+      serviceTitle: "Full Balayage & Blowout",
+      category: "hair",
+      durationMinutes: 120,
       originalPrice: 280,
       discountedPrice: 140,
-      discountPercentage: 50,
-      dateFormatted: "Today",
-      timeFormatted: "2:30 PM",
-      spotsLeft: 1,
-      bookingUrl: "https://calendly.com/themirro/balayage-glow-hair",
-      isPopular: true
+      timeSlot: "Today at 2:30 PM",
+      dateLabel: "Today",
+      availableSpots: 1,
+      rating: 4.9,
+      reviewCount: 28,
+      badge: "50% OFF",
+      calendlyUrl: "https://calendly.com/themirro"
     },
     {
       id: "deal-2",
+      stylistName: "Marcus Vance",
+      stylistAvatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=200",
       salonName: "Vance Nail Bar",
-      neighborhood: "Dundas West",
-      address: "892 Dundas St W, Toronto",
-      serviceCategory: "nails",
-      serviceName: "Gel Extensions + Custom Nail Art",
+      neighborhood: "Dundas West, Toronto",
+      serviceTitle: "Gel Extensions & Custom Nail Art",
+      category: "nails",
+      durationMinutes: 75,
       originalPrice: 120,
       discountedPrice: 60,
-      discountPercentage: 50,
-      dateFormatted: "Today",
-      timeFormatted: "4:00 PM",
-      spotsLeft: 2,
-      bookingUrl: "https://calendly.com/themirro/gel-art-vance"
+      timeSlot: "Today at 4:00 PM",
+      dateLabel: "Today",
+      availableSpots: 2,
+      rating: 5.0,
+      reviewCount: 42,
+      badge: "50% OFF",
+      calendlyUrl: "https://calendly.com/themirro"
     },
     {
       id: "deal-3",
+      stylistName: "Chantal DuBois",
+      stylistAvatar: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=200",
       salonName: "Pure Skin Atelier",
-      neighborhood: "King West",
-      address: "510 King St W, Toronto",
-      serviceCategory: "skin_facials",
-      serviceName: "HydraGlow Deep Cleansing Facial",
+      neighborhood: "King West, Toronto",
+      serviceTitle: "HydraGlow Deep Cleansing Facial",
+      category: "skin_facials",
+      durationMinutes: 60,
       originalPrice: 195,
       discountedPrice: 98,
-      discountPercentage: 50,
-      dateFormatted: "Today",
-      timeFormatted: "5:15 PM",
-      spotsLeft: 1,
-      bookingUrl: "https://calendly.com/themirro/hydrafacial-pure-skin",
-      isPopular: true
+      timeSlot: "Today at 5:15 PM",
+      dateLabel: "Today",
+      availableSpots: 1,
+      rating: 4.8,
+      reviewCount: 19,
+      badge: "50% OFF",
+      calendlyUrl: "https://calendly.com/themirro"
     },
     {
       id: "deal-4",
+      stylistName: "Aria Montgomery",
+      stylistAvatar: "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&q=80&w=200",
       salonName: "Lash & Arch Co.",
-      neighborhood: "Queen West",
-      address: "740 Queen St W, Toronto",
-      serviceCategory: "brows_lashes",
-      serviceName: "Volume Lash Lift & Brow Lamination",
+      neighborhood: "Queen West, Toronto",
+      serviceTitle: "Volume Lash Lift & Brow Lamination",
+      category: "brows_lashes",
+      durationMinutes: 90,
       originalPrice: 150,
       discountedPrice: 75,
-      discountPercentage: 50,
-      dateFormatted: "Tomorrow",
-      timeFormatted: "11:00 AM",
-      spotsLeft: 1,
-      bookingUrl: "https://calendly.com/themirro/lash-brow-queen-w"
+      timeSlot: "Tomorrow at 11:00 AM",
+      dateLabel: "Tomorrow",
+      availableSpots: 1,
+      rating: 4.9,
+      reviewCount: 35,
+      badge: "50% OFF",
+      calendlyUrl: "https://calendly.com/themirro"
     }
   ]
 };
+
+function normalizeDeal(d: any) {
+  const origPrice = Number(d.originalPrice) || 100;
+  const discPrice = Number(d.discountedPrice) || 50;
+  return {
+    id: String(d.id || `deal-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`),
+    stylistName: String(d.stylistName || "Mirro Partner Stylist"),
+    stylistAvatar: String(d.stylistAvatar || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=200"),
+    salonName: String(d.salonName || "Partner Salon"),
+    neighborhood: String(d.neighborhood || "Toronto"),
+    serviceTitle: String(d.serviceTitle || d.serviceName || "Beauty Service"),
+    category: String(d.category || d.serviceCategory || "hair"),
+    durationMinutes: Number(d.durationMinutes) || 60,
+    originalPrice: origPrice,
+    discountedPrice: discPrice,
+    timeSlot: String(d.timeSlot || d.timeFormatted || "Today at 2:30 PM"),
+    dateLabel: String(d.dateLabel || d.dateFormatted || "Today"),
+    availableSpots: Number(d.availableSpots || d.spotsLeft) || 1,
+    calendlyUrl: d.calendlyUrl || d.bookingUrl || "https://calendly.com/themirro",
+    rating: Number(d.rating) || 4.9,
+    reviewCount: Number(d.reviewCount) || 20,
+    badge: d.badge || `${Math.round(((origPrice - discPrice) / origPrice) * 100)}% OFF`
+  };
+}
 
 function readDataStore() {
   try {
     if (fs.existsSync(DATA_FILE)) {
       const content = fs.readFileSync(DATA_FILE, "utf-8");
       const parsed = JSON.parse(content);
+      let modified = false;
+
       if (parsed && parsed.config && !parsed.config.googleSheetWebhookUrl) {
         parsed.config.googleSheetWebhookUrl = defaultData.config.googleSheetWebhookUrl;
+        modified = true;
+      }
+
+      if (!parsed.deals || !Array.isArray(parsed.deals) || parsed.deals.length === 0) {
+        parsed.deals = defaultData.deals;
+        modified = true;
+      } else {
+        // Ensure all deals match the full Deal schema
+        parsed.deals = parsed.deals.map(normalizeDeal);
+        modified = true;
+      }
+
+      if (modified) {
         try {
           fs.writeFileSync(DATA_FILE, JSON.stringify(parsed, null, 2), "utf-8");
         } catch (e) {}
       }
+
       return parsed;
     }
   } catch (e) {
