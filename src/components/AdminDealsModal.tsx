@@ -401,6 +401,21 @@ export const AdminDealsModal: React.FC<AdminDealsModalProps> = ({
                 </div>
               ) : (
                 <div className="space-y-3">
+                  <div className="flex items-center justify-between px-1 text-xs text-stone-500">
+                    <span>Showing {deals.length} active appointment deal{deals.length === 1 ? '' : 's'}</span>
+                    <button
+                      onClick={() => {
+                        if (window.confirm('Are you sure you want to remove ALL appointment deals from the live board?')) {
+                          deals.forEach(d => onDeleteDeal(d.id));
+                        }
+                      }}
+                      className="text-red-600 hover:text-red-700 font-medium flex items-center gap-1 hover:underline cursor-pointer"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      Clear All Deals
+                    </button>
+                  </div>
+
                   {deals.map((deal) => (
                     <div
                       key={deal.id}

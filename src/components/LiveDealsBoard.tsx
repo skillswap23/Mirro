@@ -63,13 +63,19 @@ export const LiveDealsBoard: React.FC<LiveDealsBoardProps> = ({ deals, config })
           <div>
             <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-white border border-stone-200 text-stone-700 text-xs font-medium mb-3 shadow-sm">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              Live Openings • Coming Soon
+              {deals.length > 0 ? `Live Openings • ${deals.length} Active` : 'Live Openings • Coming Soon'}
             </div>
             <h2 className="font-serif text-3xl sm:text-4xl font-normal text-stone-900 tracking-tight">
-              Today's Deals — <span className="italic font-serif text-stone-600">Coming Soon</span>
+              {deals.length > 0 ? (
+                <>Today's Live Deals — <span className="italic font-serif text-stone-600">50% OFF</span></>
+              ) : (
+                <>Today's Deals — <span className="italic font-serif text-stone-600">Coming Soon</span></>
+              )}
             </h2>
             <p className="mt-2 text-stone-600 text-sm sm:text-base max-w-xl font-light">
-              We are onboarding premier partner salons across Canada. Sign up below to receive instant SMS alert drops when last-minute openings land in your city.
+              {deals.length > 0
+                ? 'Book last-minute openings at premier partner salons across Canada. All deals are updated live in real-time.'
+                : 'We are onboarding premier partner salons across Canada. Sign up below to receive instant SMS alert drops when last-minute openings land in your city.'}
             </p>
           </div>
         </div>

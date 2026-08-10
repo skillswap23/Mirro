@@ -32,144 +32,9 @@ const defaultData = {
     googleSheetWebhookUrl: "https://script.google.com/macros/s/AKfycbw6TMJQdgvO1PHQ3Si63Lzv6H9L7UK-grhzWCvVYkzndneEMKRyLuMJIau1qqhIly_UjA/exec",
     googleSheetId: ""
   },
-  clientLeads: [
-    {
-      id: "lead-101",
-      name: "Sarah Jenkins",
-      email: "sarah.j@gmail.com",
-      phone: "+1 (416) 555-0192",
-      neighborhood: "Yorkville, Toronto",
-      services: ["hair", "nails"],
-      createdAt: "Aug 5, 2026, 2:15 PM"
-    },
-    {
-      id: "lead-102",
-      name: "Maya Lin",
-      email: "maya.lin@outlook.com",
-      phone: "+1 (647) 555-0143",
-      neighborhood: "King West, Toronto",
-      services: ["brows_lashes", "skin_facials"],
-      createdAt: "Aug 5, 2026, 4:30 PM"
-    },
-    {
-      id: "lead-103",
-      name: "Jessica Taylor",
-      email: "jess.taylor@yahoo.ca",
-      phone: "+1 (416) 555-0188",
-      neighborhood: "Queen West, Toronto",
-      services: ["hair", "makeup"],
-      createdAt: "Aug 6, 2026, 10:05 AM"
-    },
-    {
-      id: "lead-104",
-      name: "Amanda Ross",
-      email: "amanda.ross@gmail.com",
-      phone: "+1 (647) 555-0210",
-      neighborhood: "Leslieville, Toronto",
-      services: ["nails", "brows_lashes"],
-      createdAt: "Aug 6, 2026, 11:40 AM"
-    }
-  ],
-  proLeads: [
-    {
-      id: "pro-201",
-      name: "Elena Rostova",
-      businessName: "Glow Hair Studio",
-      serviceType: "Hair Styling & Color",
-      neighborhood: "Yorkville, Toronto",
-      email: "elena@glowhairstudio.ca",
-      phone: "+1 (416) 555-0812",
-      createdAt: "Aug 4, 2026, 1:20 PM"
-    },
-    {
-      id: "pro-202",
-      name: "Marcus Vance",
-      businessName: "Vance Nail Bar",
-      serviceType: "Nails & Gel Art",
-      neighborhood: "Dundas West, Toronto",
-      email: "marcus@vancenails.com",
-      phone: "+1 (647) 555-0941",
-      createdAt: "Aug 5, 2026, 9:15 AM"
-    }
-  ],
-  deals: [
-    {
-      id: "deal-1",
-      stylistName: "Elena Rostova",
-      stylistAvatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=200",
-      salonName: "Glow Hair Studio",
-      neighborhood: "Yorkville, Toronto",
-      serviceTitle: "Full Balayage & Blowout",
-      category: "hair",
-      durationMinutes: 120,
-      originalPrice: 280,
-      discountedPrice: 140,
-      timeSlot: "Today at 2:30 PM",
-      dateLabel: "Today",
-      availableSpots: 1,
-      rating: 4.9,
-      reviewCount: 28,
-      badge: "50% OFF",
-      calendlyUrl: "https://calendly.com/themirro"
-    },
-    {
-      id: "deal-2",
-      stylistName: "Marcus Vance",
-      stylistAvatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=200",
-      salonName: "Vance Nail Bar",
-      neighborhood: "Dundas West, Toronto",
-      serviceTitle: "Gel Extensions & Custom Nail Art",
-      category: "nails",
-      durationMinutes: 75,
-      originalPrice: 120,
-      discountedPrice: 60,
-      timeSlot: "Today at 4:00 PM",
-      dateLabel: "Today",
-      availableSpots: 2,
-      rating: 5.0,
-      reviewCount: 42,
-      badge: "50% OFF",
-      calendlyUrl: "https://calendly.com/themirro"
-    },
-    {
-      id: "deal-3",
-      stylistName: "Chantal DuBois",
-      stylistAvatar: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=200",
-      salonName: "Pure Skin Atelier",
-      neighborhood: "King West, Toronto",
-      serviceTitle: "HydraGlow Deep Cleansing Facial",
-      category: "skin_facials",
-      durationMinutes: 60,
-      originalPrice: 195,
-      discountedPrice: 98,
-      timeSlot: "Today at 5:15 PM",
-      dateLabel: "Today",
-      availableSpots: 1,
-      rating: 4.8,
-      reviewCount: 19,
-      badge: "50% OFF",
-      calendlyUrl: "https://calendly.com/themirro"
-    },
-    {
-      id: "deal-4",
-      stylistName: "Aria Montgomery",
-      stylistAvatar: "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&q=80&w=200",
-      salonName: "Lash & Arch Co.",
-      neighborhood: "Queen West, Toronto",
-      serviceTitle: "Volume Lash Lift & Brow Lamination",
-      category: "brows_lashes",
-      durationMinutes: 90,
-      originalPrice: 150,
-      discountedPrice: 75,
-      timeSlot: "Tomorrow at 11:00 AM",
-      dateLabel: "Tomorrow",
-      availableSpots: 1,
-      rating: 4.9,
-      reviewCount: 35,
-      badge: "50% OFF",
-      calendlyUrl: "https://calendly.com/themirro"
-    }
-  ]
+  clientLeads: [],
+  proLeads: [],
+  deals: []
 };
 
 function normalizeDeal(d: any) {
@@ -208,8 +73,8 @@ function readDataStore() {
         modified = true;
       }
 
-      if (!parsed.deals || !Array.isArray(parsed.deals) || parsed.deals.length === 0) {
-        parsed.deals = defaultData.deals;
+      if (!parsed.deals || !Array.isArray(parsed.deals)) {
+        parsed.deals = [];
         modified = true;
       }
 
@@ -232,9 +97,33 @@ function readDataStore() {
   return { ...defaultData };
 }
 
+// SSE Connections Array for Instant Cross-Browser Realtime Sync
+let sseClients: express.Response[] = [];
+
+function broadcastToClients() {
+  const data = readDataStore();
+  const payload = `data: ${JSON.stringify({
+    config: data.config,
+    clientLeads: data.clientLeads || [],
+    proLeads: data.proLeads || [],
+    deals: data.deals || [],
+    timestamp: Date.now(),
+  })}\n\n`;
+
+  sseClients = sseClients.filter((client) => {
+    try {
+      client.write(payload);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  });
+}
+
 function writeDataStore(data: any) {
   try {
     fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2), "utf-8");
+    broadcastToClients();
   } catch (e) {
     console.error("Error writing data store", e);
   }
@@ -277,6 +166,32 @@ async function startServer() {
       console.warn(`[Google Sheets Auto-Sync] Failed to post ${leadType} lead:`, err);
     }
   }
+
+  // Realtime Server-Sent Events Endpoint for Instant Broadcast
+  app.get("/api/stream", (req, res) => {
+    res.setHeader("Content-Type", "text/event-stream");
+    res.setHeader("Cache-Control", "no-cache, no-transform");
+    res.setHeader("Connection", "keep-alive");
+    res.setHeader("X-Accel-Buffering", "no");
+    res.flushHeaders();
+
+    const data = readDataStore();
+    res.write(
+      `data: ${JSON.stringify({
+        config: data.config,
+        clientLeads: data.clientLeads || [],
+        proLeads: data.proLeads || [],
+        deals: data.deals || [],
+        timestamp: Date.now(),
+      })}\n\n`
+    );
+
+    sseClients.push(res);
+
+    req.on("close", () => {
+      sseClients = sseClients.filter((client) => client !== res);
+    });
+  });
 
   // 1. Get central app data
   app.get("/api/data", (req, res) => {

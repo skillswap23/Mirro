@@ -19,7 +19,7 @@ import { INITIAL_CLIENT_LEADS, INITIAL_PRO_LEADS } from './data/initialLeads';
 
 export default function App() {
   const [config, setConfig] = useState<SiteConfig>(DEFAULT_SITE_CONFIG);
-  const [deals, setDeals] = useState<Deal[]>(INITIAL_DEALS);
+  const [deals, setDeals] = useState<Deal[]>([]);
   const [clientLeads, setClientLeads] = useState<ClientLead[]>(INITIAL_CLIENT_LEADS);
   const [proLeads, setProLeads] = useState<ProLead[]>(INITIAL_PRO_LEADS);
 
@@ -62,9 +62,43 @@ export default function App() {
 
   useEffect(() => {
     fetchCentralData();
-    // Fast polling every 2 seconds for real-time live synchronization across browsers
+
+    // Setup SSE connection for instant real-time data sync across Chrome, Safari & mobile
+    let eventSource: EventSource | null = null;
+    try {
+      const streamUrl = typeof window !== 'undefined' ? `${window.location.origin}/api/stream` : '/api/stream';
+      eventSource = new EventSource(streamUrl);
+
+      eventSource.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          if (data && typeof data === 'object') {
+            if (data.config) setConfig(data.config);
+            if (Array.isArray(data.clientLeads)) setClientLeads(data.clientLeads);
+            if (Array.isArray(data.proLeads)) setProLeads(data.proLeads);
+            if (Array.isArray(data.deals)) setDeals(data.deals);
+          }
+        } catch (e) {
+          // quiet catch
+        }
+      };
+
+      eventSource.onerror = () => {
+        // SSE error or disconnect fallback to polling
+      };
+    } catch (e) {
+      console.warn('SSE stream connection error:', e);
+    }
+
+    // Fast polling every 2 seconds for fallback live synchronization across browsers
     const interval = setInterval(fetchCentralData, 2000);
-    return () => clearInterval(interval);
+
+    return () => {
+      if (eventSource) {
+        eventSource.close();
+      }
+      clearInterval(interval);
+    };
   }, []);
 
   // Modals Visibility
