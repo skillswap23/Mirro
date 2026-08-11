@@ -10,6 +10,8 @@ interface CustomerSignupFormProps {
 
 const SERVICE_OPTIONS: { id: ServiceCategory; label: string }[] = [
   { id: 'hair', label: 'Hair Cut & Styling' },
+  { id: 'braids', label: 'Braids & Cornrows' },
+  { id: 'sewins', label: 'Sew-ins & Weaves' },
   { id: 'nails', label: 'Nails (Gel, Acrylics)' },
   { id: 'brows_lashes', label: 'Brows & Lashes' },
   { id: 'skin_facials', label: 'Skin & Facials' },

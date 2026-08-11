@@ -210,10 +210,13 @@ export const AdminDealsModal: React.FC<AdminDealsModalProps> = ({
                       className="w-full bg-white text-xs text-stone-900 px-3 py-2.5 rounded-xl border border-stone-200 focus:outline-none focus:border-stone-400"
                     >
                       <option value="hair">Hair</option>
+                      <option value="braids">Braids</option>
+                      <option value="sewins">Sew-ins</option>
                       <option value="nails">Nails</option>
                       <option value="brows_lashes">Brows & Lashes</option>
                       <option value="skin_facials">Facials & Skin</option>
                       <option value="makeup">Makeup</option>
+                      <option value="others">Other Services</option>
                     </select>
                   </div>
                 </div>

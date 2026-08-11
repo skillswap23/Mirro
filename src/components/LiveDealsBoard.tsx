@@ -10,10 +10,13 @@ interface LiveDealsBoardProps {
 const CATEGORIES: { key: 'all' | ServiceCategory; label: string }[] = [
   { key: 'all', label: 'All Deals' },
   { key: 'hair', label: 'Hair' },
+  { key: 'braids', label: 'Braids' },
+  { key: 'sewins', label: 'Sew-ins' },
   { key: 'nails', label: 'Nails' },
   { key: 'brows_lashes', label: 'Brows & Lashes' },
   { key: 'skin_facials', label: 'Facials & Skin' },
   { key: 'makeup', label: 'Makeup' },
+  { key: 'others', label: 'Other Services' },
 ];
 
 export const LiveDealsBoard: React.FC<LiveDealsBoardProps> = ({ deals, config }) => {

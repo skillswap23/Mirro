@@ -11,6 +11,8 @@ interface JoinCommunitySectionProps {
 
 const SERVICE_OPTIONS: { id: ServiceCategory | 'other'; label: string }[] = [
   { id: 'hair', label: 'Hair' },
+  { id: 'braids', label: 'Braids' },
+  { id: 'sewins', label: 'Sew-ins' },
   { id: 'nails', label: 'Nails' },
   { id: 'brows_lashes', label: 'Brows & Lashes' },
   { id: 'skin_facials', label: 'Facials & Skin' },
@@ -41,6 +43,7 @@ export const JoinCommunitySection: React.FC<JoinCommunitySectionProps> = ({
   const [proName, setProName] = useState('');
   const [businessName, setBusinessName] = useState('');
   const [serviceType, setServiceType] = useState('hair');
+  const [proCustomService, setProCustomService] = useState('');
   const [proCity, setProCity] = useState('');
   const [proEmail, setProEmail] = useState('');
   const [proPhone, setProPhone] = useState('');
@@ -122,11 +125,15 @@ export const JoinCommunitySection: React.FC<JoinCommunitySectionProps> = ({
     setIsProSubmitting(true);
     setProSubmitError('');
 
+    const resolvedServiceType = serviceType === 'others'
+      ? (proCustomService.trim() ? `Others (${proCustomService.trim()})` : 'Others')
+      : serviceType;
+
     const newProLead: ProLead = {
       id: 'pro-' + Date.now(),
       name: proName,
       businessName,
-      serviceType,
+      serviceType: resolvedServiceType,
       neighborhood: proCity || 'Canada',
       email: proEmail,
       phone: proPhone,
@@ -143,7 +150,7 @@ export const JoinCommunitySection: React.FC<JoinCommunitySectionProps> = ({
       formType: 'Stylist / Salon Partner Application',
       name: proName,
       businessName: businessName || 'N/A',
-      serviceSpecialty: serviceType,
+      serviceSpecialty: resolvedServiceType,
       cityOrNeighborhood: proCity || 'Canada',
       email: proEmail,
       phone: proPhone,
@@ -540,12 +547,31 @@ export const JoinCommunitySection: React.FC<JoinCommunitySectionProps> = ({
                         className="w-full bg-white text-sm text-stone-900 px-3.5 py-2.5 rounded-xl border border-stone-200 focus:outline-none focus:border-stone-400"
                       >
                         <option value="hair">Hair Styling & Color</option>
+                        <option value="braids">Braids & Cornrows</option>
+                        <option value="sewins">Sew-ins & Weaves</option>
                         <option value="nails">Nails & Manicure</option>
                         <option value="brows_lashes">Brows & Lashes</option>
                         <option value="skin_facials">Facials & Esthetics</option>
                         <option value="makeup">Makeup Artistry</option>
                         <option value="full_service">Full-Service Salon</option>
+                        <option value="others">Others (Manual Input)</option>
                       </select>
+
+                      {serviceType === 'others' && (
+                        <div className="mt-2.5 animate-fadeIn">
+                          <label className="block text-xs font-medium text-stone-700 mb-1">
+                            Specify Other Service(s) <span className="text-stone-900">*</span>
+                          </label>
+                          <input
+                            type="text"
+                            required
+                            placeholder="e.g. Locs, Dreadlocks, Lash Extensions, Microblading..."
+                            value={proCustomService}
+                            onChange={(e) => setProCustomService(e.target.value)}
+                            className="w-full bg-white text-sm text-stone-900 placeholder-stone-400 px-3.5 py-2.5 rounded-xl border border-stone-200 focus:outline-none focus:border-stone-400"
+                          />
+                        </div>
+                      )}
                     </div>
 
                     <div>

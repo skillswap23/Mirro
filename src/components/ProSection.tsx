@@ -10,6 +10,7 @@ export const ProSection: React.FC<ProSectionProps> = ({ onProLeadAdded }) => {
   const [name, setName] = useState('');
   const [businessName, setBusinessName] = useState('');
   const [serviceType, setServiceType] = useState('hair');
+  const [customService, setCustomService] = useState('');
   const [neighborhood, setNeighborhood] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
@@ -24,11 +25,15 @@ export const ProSection: React.FC<ProSectionProps> = ({ onProLeadAdded }) => {
     setIsSubmitting(true);
     setSubmitError('');
 
+    const resolvedServiceType = serviceType === 'others'
+      ? (customService.trim() ? `Others (${customService.trim()})` : 'Others')
+      : serviceType;
+
     const newLead: ProLead = {
       id: 'pro-' + Date.now(),
       name,
       businessName,
-      serviceType,
+      serviceType: resolvedServiceType,
       neighborhood: neighborhood || 'Canada',
       email,
       phone,
@@ -45,7 +50,7 @@ export const ProSection: React.FC<ProSectionProps> = ({ onProLeadAdded }) => {
       formType: 'Stylist / Salon Partner Application (Pro Section)',
       name,
       businessName: businessName || 'N/A',
-      serviceSpecialty: serviceType,
+      serviceSpecialty: resolvedServiceType,
       cityOrNeighborhood: neighborhood || 'Canada',
       email,
       phone,
@@ -227,12 +232,31 @@ export const ProSection: React.FC<ProSectionProps> = ({ onProLeadAdded }) => {
                       className="w-full bg-[#FAF8F5] text-sm text-stone-900 px-3.5 py-2.5 rounded-xl border border-stone-200 focus:outline-none focus:border-stone-400"
                     >
                       <option value="hair">Hair Styling & Color</option>
+                      <option value="braids">Braids & Cornrows</option>
+                      <option value="sewins">Sew-ins & Weaves</option>
                       <option value="nails">Nails & Manicure</option>
                       <option value="brows_lashes">Brows & Lashes</option>
                       <option value="skin_facials">Facials & Esthetics</option>
                       <option value="makeup">Makeup Artistry</option>
                       <option value="full_service">Full-Service Salon</option>
+                      <option value="others">Others (Manual Input)</option>
                     </select>
+
+                    {serviceType === 'others' && (
+                      <div className="mt-2.5 animate-fadeIn">
+                        <label className="block text-xs font-medium text-stone-700 mb-1">
+                          Specify Other Service(s) <span className="text-stone-900">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          placeholder="e.g. Locs, Dreadlocks, Lash Extensions, Microblading..."
+                          value={customService}
+                          onChange={(e) => setCustomService(e.target.value)}
+                          className="w-full bg-[#FAF8F5] text-sm text-stone-900 placeholder-stone-400 px-3.5 py-2.5 rounded-xl border border-stone-200 focus:outline-none focus:border-stone-400"
+                        />
+                      </div>
+                    )}
                   </div>
 
                   <div>

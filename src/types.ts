@@ -1,4 +1,4 @@
-export type ServiceCategory = 'hair' | 'nails' | 'brows_lashes' | 'makeup' | 'skin_facials';
+export type ServiceCategory = 'hair' | 'braids' | 'sewins' | 'nails' | 'brows_lashes' | 'makeup' | 'skin_facials' | 'others';
 
 export interface Deal {
   id: string;
